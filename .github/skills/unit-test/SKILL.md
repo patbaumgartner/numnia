@@ -13,7 +13,7 @@ Invocation: `unit-test UC-005`
 2. At least **one** dedicated test per business rule.
 3. Backend (Java 25 LTS):
    - JUnit Jupiter 6.0.x + AssertJ 3.27.x + Mockito 5.23.x.
-   - Integration tests with **Testcontainers 2.0.x** (PostgreSQL 18.3, Redis 8.6, object storage per ADR-003) instead of H2.
+   - Integration tests with **Testcontainers 2.0.x** (PostgreSQL 18.3, Redis 8.6, object storage per ADR-001) instead of H2.
    - Naming: `methodUnderTest_state_expectedBehaviour`.
    - No `@Disabled`/`@Ignore` without an issue reference.
 4. Frontend (TypeScript):

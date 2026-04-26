@@ -16,9 +16,24 @@ If anything below conflicts with those two files, those two files win.
 
 - **One use case per iteration.** Pick the lowest-numbered UC under
   `docs/use_cases/` that is not yet GREEN in `.ralph/usecase-progress.md`.
+- **Full stack per UC.** Backend AND frontend slices both reach GREEN before
+  the UC is marked done. A UC with a UI main flow MUST have an executable
+  E2E Cucumber scenario in `e2e/features/UC-XXX.feature` driving Playwright.
+  Backend-only UCs must justify the absence of an E2E feature in the
+  progress log.
 - **Commit only on green.** Conventional Commits referencing UC-XXX and the
   touched FR-/NFR- IDs.
 - **Do not edit `docs/Requirements.md`.**
+
+## Phase 0 — Bootstrap check (every iteration, before Phase 1)
+
+Verify scaffolding exists. If any item is missing, stop the UC work and
+bootstrap first; record the bootstrap commit before resuming the UC.
+
+- `backend/pom.xml`, `backend/src/main/java`, `backend/src/test/resources/features/`
+- `frontend/package.json`, `frontend/src`, `frontend/vite.config.ts`
+- `e2e/package.json`, `e2e/features/`, `e2e/steps/`
+- `compose.yaml` at workspace root
 
 ## Per-iteration procedure
 
@@ -66,7 +81,7 @@ role for the duration of the phase.
 
 ## Stop condition
 
-When UC-001 through UC-011 are all green, documented and committed, emit
+When UC-001 through UC-002 are all green, documented and committed, emit
 exactly:
 
 <promise>ALL_USE_CASES_DONE</promise>

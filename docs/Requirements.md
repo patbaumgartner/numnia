@@ -23,7 +23,7 @@ Change log:
 | 1.0 | 2026-04-26 | Baseline SRS created. |
 | 1.1 | 2026-04-26 | Pedagogical assumptions (section 6.1.2) added; mastery thresholds, BDD/TDD/craftsmanship NFRs (7.6) and toolchain (4.1) anchored; creature names with variable endings (FR-CRE-007); Decision Log extended with D-13; open follow-up items converted into operational work packages with owner and due date; in-product language consistently Swiss High German with umlauts, without sharp s. |
 | 1.2 | 2026-04-26 | Translated to English. Project documentation language is now English; in-product UI language remains Swiss High German per NFR-I18N. |
-| 1.3 | 2026-04-27 | §4.1 reduced to capability-level guardrails; concrete version pins now live in ADR-002 and arc42 §2.1 (single source of truth). Object storage product reference removed in favour of ADR-003. |
+| 1.3 | 2026-04-27 | §4.1 reduced to capability-level guardrails; concrete version pins now live in ADR-001 and arc42 §2.1 (single source of truth). Object storage product reference removed in favour of ADR-001. |
 
 ## Reading Rules
 
@@ -115,14 +115,14 @@ The product is considered successful when:
 
 ### 4.1 Technical Guardrails
 
-Capability-level constraints (binding). Concrete version pins live in **arc42 §2.1** and **ADR-002** (single source of truth):
+Capability-level constraints (binding). Concrete version pins live in **arc42 §2.1** and **ADR-001** (single source of truth):
 
 - Frontend: TypeScript, React, Babylon.js, Vite
 - Backend: Java LTS, Spring Boot LTS, Spring Modulith
 - Persistence: PostgreSQL with Flyway migrations
 - Session / matchmaking cache: Redis OSS
-- Asset storage: S3-compatible object storage (selection per ADR-003)
-- Communication: REST + WebSocket; GraphQL only where REST is insufficient (ADR-005)
+- Asset storage: S3-compatible object storage (selection per ADR-001)
+- Communication: REST + WebSocket; GraphQL only where REST is insufficient (ADR-003)
 - API contract: OpenAPI 3.1 for REST endpoints
 - Build / tooling: Maven Wrapper (backend), pnpm (frontend), Docker and docker-compose
 - Test tooling: JUnit Jupiter + AssertJ + Mockito + Testcontainers + Cucumber-JVM (backend); Vitest + React Testing Library + Playwright + @cucumber/cucumber (frontend / E2E)

@@ -12,7 +12,18 @@ Invoke with a UC ID as argument: `implement UC-005`
 
 - `docs/use_cases/UC-XXX-*.md` exists and is consolidated.
 - `docs/entity_model.md` covers the required entities (otherwise run `entity-model` skill first).
-- Stack scaffolding exists (`backend/`, `frontend/`, `compose.yaml`).
+- Stack scaffolding exists (`backend/`, `frontend/`, `e2e/`, `compose.yaml`). **If any are missing, stop and bootstrap them first** — do not implement a UC against half a stack.
+
+## Definition of Done (per UC, full-stack)
+
+A use case is **only** done when all of the following are green:
+
+- Backend Cucumber feature(s) under `backend/src/test/resources/features/UC-XXX.feature`.
+- Backend unit/integration tests (JUnit 6 + AssertJ + Mockito; Testcontainers where persistence is exercised).
+- Frontend unit tests (Vitest + RTL) for every UI component the UC introduces.
+- E2E Cucumber feature under `e2e/features/UC-XXX.feature` driving the real UI through Playwright. **Mandatory whenever the UC has a UI step in its main flow.** UCs that are purely backend (e.g. data export job triggers) may skip this — justify in the PR.
+- Coverage gates met: backend ≥ 80% line / 70% branch, frontend ≥ 70% line.
+- UI strings in Swiss High German with umlauts, no sharp s.
 
 ## Procedure (Test First, TDD)
 

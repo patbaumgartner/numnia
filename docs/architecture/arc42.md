@@ -44,10 +44,10 @@ See SRS section 3. Architecturally relevant in particular: children (UX load), p
 | Area | Requirement | Source |
 | --- | --- | --- |
 | Frontend | Node.js 24 LTS, pnpm 10.33.x, TypeScript 6.0.x, React 19.2.x, Babylon.js 9.4.x, Vite 8.0.x | SRS 4.1 |
-| Backend | Java 25 LTS, Spring Boot 4.0.6 (Spring Framework 7.0.7), Spring Modulith 2.0.6, Maven Wrapper | SRS 4.1, ADR-002, ADR-011 |
+| Backend | Java 25 LTS, Spring Boot 4.0.6 (Spring Framework 7.0.7), Spring Modulith 2.0.6, Maven Wrapper | SRS 4.1, ADR-001, ADR-009 |
 | Persistence | PostgreSQL 18.3, Flyway 12.4.x | SRS 4.1 |
 | Cache / Matchmaking | Redis 8.6 OSS | SRS 4.1 |
-| Asset storage | Object storage (S3-compatible); see ADR-003 - MinIO repo archived Apr 2026, interim pin to last OSS release `RELEASE.2025-10-15T17-29-55Z`, target migration to Garage or SeaweedFS | ADR-003 |
+| Asset storage | Object storage (S3-compatible); see ADR-001 - MinIO repo archived Apr 2026, interim pin to last OSS release `RELEASE.2025-10-15T17-29-55Z`, target migration to Garage or SeaweedFS | ADR-001 |
 | Communication | REST/GraphQL + WebSocket | SRS 4.1, 9.1 |
 | API contract | OpenAPI 3.1 | SRS 4.1 |
 | Build / tooling | Maven Wrapper (backend), pnpm 10.33.x (frontend), Docker, docker-compose | SRS 4.1 |
@@ -105,7 +105,7 @@ flowchart LR
         WS[WebSocket Gateway]
         DB[(PostgreSQL 18.3)]
         Cache[(Redis 8.6)]
-        Assets[(Object storage<br/>per ADR-003)]
+        Assets[(Object storage<br/>per ADR-001)]
         Mod[Moderation service]
     end
     SPA -- HTTPS REST/GraphQL --> API
@@ -166,7 +166,7 @@ flowchart TB
     subgraph Platform
         DB[(PostgreSQL)]
         Cache[(Redis)]
-        Assets[(Object storage<br/>per ADR-003)]
+        Assets[(Object storage<br/>per ADR-001)]
         Audit[(Audit Log Store)]
     end
 
@@ -346,7 +346,7 @@ flowchart TB
         WS[WebSocket Node]
         Pg[(PostgreSQL 18.3)]
         Rd[(Redis 8.6)]
-        Mn[(Object storage<br/>per ADR-003)]
+        Mn[(Object storage<br/>per ADR-001)]
         Mon[Monitoring + Logs]
     end
     Browser <--HTTPS/WSS--> LB
@@ -438,17 +438,15 @@ flowchart TB
 
 | ID | Decision | Rationale | Reference |
 | --- | --- | --- | --- |
-| ADR-001 | Stack Selection (Java/Spring Boot, React+Babylon SPA, PostgreSQL, Redis, MinIO, OpenAPI 3.1) - see [ADR-001](../adr/ADR-001-stack-selection.md) | Long LTS, mature test ecosystem, native fit for self-hosted CH single-node | NFR-OPS-001..003, NFR-ENG-001..006, SRS 4.1 |
-| ADR-002 | Java 25 LTS and full stack version refresh (April 2026) - supersedes parts of ADR-001 - see [ADR-002](../adr/ADR-002-java25-and-version-refresh.md) | LTS horizon, unblocks Spring Boot 4 + cucumber-spring 7.34.3 | NFR-ENG-001..006 |
-| ADR-003 | Object storage: interim MinIO pin (last OSS release `RELEASE.2025-10-15T17-29-55Z`), target migration to Garage or SeaweedFS before launch - supersedes the MinIO selection of ADR-001 - see [ADR-003](../adr/ADR-003-object-storage-minio-replacement.md) | MinIO repo archived Apr 2026 (moved to paid AiStor) | NFR-OPS-003 |
-| ADR-004 | PostgreSQL as primary persistence, Redis only for session / matchmaking - see [ADR-004](../adr/ADR-004-postgresql-primary-redis-secondary.md) | Relational learning histories and audit, cache only where needed | SRS 4.1, NFR-PRIV-001 |
-| ADR-005 | OpenAPI 3.1 as API contract, GraphQL only where aggregation is required - see [ADR-005](../adr/ADR-005-openapi-3-1-rest-graphql-only-where-needed.md) | Contract-driven development, clear versioning | SRS 9.1 |
-| ADR-006 | WebSocket only for multiplayer and live events - see [ADR-006](../adr/ADR-006-websocket-only-for-multiplayer.md) | Avoids unnecessary stateful connections | FR-MP-001, NFR-PERF-003 |
-| ADR-007 | Bounded contexts aligned with SRS chapters 6.x - see [ADR-007](../adr/ADR-007-bounded-contexts-aligned-with-srs.md) | High functional cohesion, AIUP traceability per use case | SRS 6 |
-| ADR-008 | Mastery thresholds, G levels and task pools are configuration data - see [ADR-008](../adr/ADR-008-mastery-and-task-pools-as-configuration.md) | LiveOps without code deployment, pilot fine-tuning possible | FR-OPS-002, AP-02 |
-| ADR-009 | Test pyramid: JUnit Jupiter 6.0.x / AssertJ 3.27.x / Mockito 5.23.x + Testcontainers 2.0.x, Cucumber-JVM ≥ 7.34.3 for BDD, Playwright 1.59.x for E2E - see [ADR-009](../adr/ADR-009-test-pyramid.md) | Fulfills NFR-ENG-002..004 | SRS 4.1, 11 |
-| ADR-010 | docker-compose as standard orchestration - see [ADR-010](../adr/ADR-010-docker-compose-orchestration.md) | Operability with a small team | SRS 4.2 |
-| ADR-011 | Modulithic Spring Boot 4.0.6 backend instead of microservices - see [ADR-011](../adr/ADR-011-modulith-over-microservices.md) | Small operations team, clear module boundaries are sufficient for Releases 1-3 | NFR-OPS-001, SRS D-10 |
+| ADR-001 | Stack Selection (Java 25 LTS, Spring Boot 4.0.6, React 19 + Babylon.js 9 SPA, PostgreSQL 18.3, Redis 8.6 OSS, S3-compatible object storage, OpenAPI 3.1; interim MinIO pin `RELEASE.2025-10-15T17-29-55Z`, target migration to Garage or SeaweedFS before launch) - see [ADR-001](../adr/ADR-001-stack-selection.md) | Long LTS, mature test ecosystem, native fit for self-hosted CH single-node, OSS-first | NFR-OPS-001..003, NFR-ENG-001..006, SRS 4.1 |
+| ADR-002 | PostgreSQL as primary persistence, Redis only for session / matchmaking - see [ADR-002](../adr/ADR-002-postgresql-primary-redis-secondary.md) | Relational learning histories and audit, cache only where needed | SRS 4.1, NFR-PRIV-001 |
+| ADR-003 | OpenAPI 3.1 as API contract, GraphQL only where aggregation is required - see [ADR-003](../adr/ADR-003-openapi-3-1-rest-graphql-only-where-needed.md) | Contract-driven development, clear versioning | SRS 9.1 |
+| ADR-004 | WebSocket only for multiplayer and live events - see [ADR-004](../adr/ADR-004-websocket-only-for-multiplayer.md) | Avoids unnecessary stateful connections | FR-MP-001, NFR-PERF-003 |
+| ADR-005 | Bounded contexts aligned with SRS chapters 6.x - see [ADR-005](../adr/ADR-005-bounded-contexts-aligned-with-srs.md) | High functional cohesion, AIUP traceability per use case | SRS 6 |
+| ADR-006 | Mastery thresholds, G levels and task pools are configuration data - see [ADR-006](../adr/ADR-006-mastery-and-task-pools-as-configuration.md) | LiveOps without code deployment, pilot fine-tuning possible | FR-OPS-002, AP-02 |
+| ADR-007 | Test pyramid: JUnit Jupiter 6.0.x / AssertJ 3.27.x / Mockito 5.23.x + Testcontainers 2.0.x, Cucumber-JVM ≥ 7.34.3 for BDD, Playwright 1.59.x for E2E - see [ADR-007](../adr/ADR-007-test-pyramid.md) | Fulfills NFR-ENG-002..004 | SRS 4.1, 11 |
+| ADR-008 | docker-compose as standard orchestration - see [ADR-008](../adr/ADR-008-docker-compose-orchestration.md) | Operability with a small team | SRS 4.2 |
+| ADR-009 | Modulithic Spring Boot 4.0.6 backend instead of microservices - see [ADR-009](../adr/ADR-009-modulith-over-microservices.md) | Small operations team, clear module boundaries are sufficient for Releases 1-3 | NFR-OPS-001, SRS D-10 |
 
 Further ADRs will be added in `docs/adr/ADR-XXX-*.md` as detailed questions materialize during the construction phase.
 

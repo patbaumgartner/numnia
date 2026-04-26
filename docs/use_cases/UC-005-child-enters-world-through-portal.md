@@ -6,7 +6,7 @@
 | Title | Child enters a world through a training portal |
 | Release | R1 |
 | Primary actor | Child (7-12) |
-| Secondary actors | Game & Worlds Service, Asset Storage (per ADR-003) |
+| Secondary actors | Game & Worlds Service, Asset Storage (per ADR-001) |
 | Status | Specified |
 | Goal | The child picks an unlocked world, enters it through a training portal and can tackle tasks there. |
 | Related requirements | FR-WORLD-001, FR-WORLD-002, FR-WORLD-003, FR-WORLD-004, FR-WORLD-005, NFR-PERF-002, NFR-A11Y-002, NFR-A11Y-003 |

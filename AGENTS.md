@@ -67,7 +67,7 @@ From [docs/Requirements.md](docs/Requirements.md) §11.4 and §7.6:
 ### Backend
 
 - **Java 25 LTS**, **Spring Boot 4.0.6** (Spring Framework 7.0.7 transitively), **Spring Modulith 2.0.6** (boundary verification, slice tests, event publication registry), Maven Wrapper
-- **PostgreSQL 18.3** (primary), **Redis 8.6** OSS (sessions/matchmaking), object storage: **see ADR-003** (MinIO repo archived Apr 2026; interim pin to last OSS release `RELEASE.2025-10-15T17-29-55Z`, target migration to **Garage** or **SeaweedFS**)
+- **PostgreSQL 18.3** (primary), **Redis 8.6** OSS (sessions/matchmaking), object storage: **see ADR-001** (MinIO repo archived Apr 2026; interim pin to last OSS release `RELEASE.2025-10-15T17-29-55Z`, target migration to **Garage** or **SeaweedFS**)
 - API: REST + WebSocket, **OpenAPI 3.1** as the contract
 - Tests: **JUnit Jupiter 6.0.x** (stable), **AssertJ 3.27.x** (stable), **Mockito 5.23.x**, **Testcontainers 2.0.x** for integration tests, **Cucumber-JVM ≥ 7.34.3** for BDD (cucumber-spring 7.34.3 is the first release that supports Spring 7 / Spring Boot 4 — do not pin below; embeds Spring 7.0.3, JUnit 6.0.2, Mockito 5.21.0)
 - Database migrations: **Flyway 12.4.x**
@@ -140,7 +140,7 @@ numnia/
    - In-product UI text, audio scripts, child-/parent-facing copy: **Swiss High German with umlauts, no sharp s** (NFR-I18N).
 5. **Security first**: no endpoint without authn/authz; no free-text input field for children (FR-SAFE-001..002).
 6. **Privacy**: no personal data in logs, no external trackers, no data outside CH.
-7. **Configurability**: mastery thresholds, S/G levels, task pools are configuration, not code (FR-OPS-002, ADR-008).
+7. **Configurability**: mastery thresholds, S/G levels, task pools are configuration, not code (FR-OPS-002, ADR-006).
 8. **Traceability**: pull-request description includes the referenced `UC-XXX` and `FR-/NFR-` IDs and the affected BDD scenarios.
 9. **When in doubt, do not guess** - the SRS/UCs are the truth; if a statement is missing, use the `use-case-spec` or `adr` skill to extend the spec or propose an ADR draft.
 10. **Do not modify `docs/Requirements.md`**, except on explicit instruction with a version bump in the change log.

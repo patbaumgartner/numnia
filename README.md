@@ -31,7 +31,7 @@ requirements → entity-model → use-case-diagram → use-case-spec → impleme
 
 ## Stack
 
-- Backend: Java 25 LTS, Spring Boot 4.0.6 (Spring 7.0.7), Spring Modulith 2.0.6, PostgreSQL 18.3, Redis 8.6 OSS, object storage per ADR-003, OpenAPI 3.1, Flyway 12.4.x
+- Backend: Java 25 LTS, Spring Boot 4.0.6 (Spring 7.0.7), Spring Modulith 2.0.6, PostgreSQL 18.3, Redis 8.6 OSS, object storage per ADR-001, OpenAPI 3.1, Flyway 12.4.x
 - Frontend: Node.js 24 LTS, pnpm 10.33.x, TypeScript 6.0.x, React 19.2.x, Babylon.js 9.4.x, Vite 8.0.x
 - Tests: JUnit Jupiter 6.0.x, AssertJ 3.27.x, Mockito 5.23.x, Testcontainers 2.0.x, Cucumber-JVM 7.34.3+, Vitest 4.1.x, Playwright 1.59.x, @cucumber/cucumber 12.8.x
 - Orchestration: Docker, docker-compose
