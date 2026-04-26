@@ -1,0 +1,19 @@
+{
+    "name": "numnia-e2e",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "description": "Numnia end-to-end BDD tests (Playwright + Cucumber). Stack pins per docs/adr/ADR-001.",
+    "scripts": {
+        "test": "cucumber-js",
+        "test:ui": "cucumber-js --tags @ui",
+        "playwright:install": "playwright install --with-deps chromium"
+    },
+    "devDependencies": {
+        "@cucumber/cucumber": "^12.8.0",
+        "@playwright/test": "^1.59.0",
+        "@types/node": "^24.0.0",
+        "tsx": "^4.20.0",
+        "typescript": "~6.0.0"
+    }
+}

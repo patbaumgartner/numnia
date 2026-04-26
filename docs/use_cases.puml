@@ -1,0 +1,60 @@
+@startuml use_cases
+!option handwritten false
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor     #1F2937
+  ArrowColor      #1F2937
+}
+
+title Numnia - Use Cases (Release 1)
+
+actor "Child"             as Child
+actor "Parent"            as Parent
+actor "Email Service"     as Mail <<system>>
+
+rectangle "Numnia Platform" {
+  usecase "UC-001 Set up parent account\nand child profile (double opt-in)"        as UC001
+  usecase "UC-002 Child signs in\nto child profile"                                 as UC002
+  usecase "UC-003 Child starts\ntraining mode"                                      as UC003
+  usecase "UC-004 Child practices in\naccuracy mode"                                as UC004
+  usecase "UC-005 Child enters a world\nthrough a portal"                           as UC005
+  usecase "UC-006 Child unlocks creature\nand picks companion"                      as UC006
+  usecase "UC-007 Child customizes avatar\nand uses avatar shop"                    as UC007
+  usecase "UC-008 Child views own\nlearning progress"                               as UC008
+  usecase "UC-009 Parent sets daily limit\nand risk mechanic"                       as UC009
+  usecase "UC-010 Parent exports\nchild data"                                       as UC010
+  usecase "UC-011 Parent deletes\nchild account"                                    as UC011
+}
+
+' Actor relations
+Parent --> UC001
+Parent --> UC009
+Parent --> UC010
+Parent --> UC011
+Child  --> UC002
+Child  --> UC003
+Child  --> UC004
+Child  --> UC005
+Child  --> UC006
+Child  --> UC007
+Child  --> UC008
+
+' Outbound to external systems
+UC001 --> Mail : sends confirmation email
+UC010 --> Mail : sends export-ready email
+UC011 --> Mail : sends deletion confirmation
+
+' Includes / extends
+UC003 ..> UC002 : <<include>>
+UC004 ..> UC002 : <<include>>
+UC005 ..> UC002 : <<include>>
+UC006 ..> UC005 : <<extend>>
+UC007 ..> UC002 : <<include>>
+UC008 ..> UC002 : <<include>>
+UC009 ..> UC001 : <<include>>
+UC010 ..> UC001 : <<include>>
+UC011 ..> UC001 : <<include>>
+
+@enduml
