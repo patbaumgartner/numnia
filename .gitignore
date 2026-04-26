@@ -1,0 +1,38 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+*.iml
+
+# Java / Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.log
+hs_err_pid*
+
+# Node / pnpm / Vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/
+e2e/blob-report/
+.pnpm-store/
+
+# Test outputs
+**/coverage/
+**/.nyc_output/
+
+# Docker / runtime
+.env
+.env.local
+
+# Misc
+*.tsbuildinfo
+
+# Ralph runner output
+nohup.out
+.ralph/system-prompt.bundle.md
+.ralph/checkpoint.json
