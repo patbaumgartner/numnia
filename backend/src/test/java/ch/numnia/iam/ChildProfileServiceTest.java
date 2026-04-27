@@ -99,7 +99,8 @@ class ChildProfileServiceTest {
             // BR-004: child entity must not carry a real name
             assertThat(saved.getPseudonym()).isEqualTo("Luna");
             // There must be no 'realName' or 'name' field — pseudonym is the only identifier
-            assertThat(saved).hasNoNullFieldsOrPropertiesExcept(); // no unexpected nulls
+            // pinHash, lockedAt, lockedReason are intentionally null until UC-002 sets them
+            assertThat(saved).hasNoNullFieldsOrPropertiesExcept("pinHash", "lockedAt", "lockedReason");
         }
 
         @Test

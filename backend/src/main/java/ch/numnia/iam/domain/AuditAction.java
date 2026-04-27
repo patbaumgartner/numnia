@@ -15,5 +15,14 @@ public enum AuditAction {
     INVALID_TOKEN,
     TOKEN_EXPIRED,
     VERIFICATION_EMAIL_RESENT,
-    RATE_LIMIT_HIT
+    RATE_LIMIT_HIT,
+    // UC-002: child sign-in lifecycle
+    CHILD_PIN_SET,
+    CHILD_SIGNED_IN,
+    CHILD_SIGN_IN_FAILED,
+    CHILD_PROFILE_LOCKED,
+    CHILD_LOCK_RELEASED,
+    CHILD_SIGNED_OUT,
+    // UC-002: cross-area authorization guard
+    PARENT_ENDPOINT_DENIED_FOR_CHILD
 }

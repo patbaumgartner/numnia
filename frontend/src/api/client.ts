@@ -15,6 +15,8 @@ import type {
   CreateChildProfileRequest,
   CreateChildProfileResponse,
   ConfirmChildProfileRequest,
+  SignInChildRequest,
+  SignInChildResponse,
   ErrorResponse,
 } from './types';
 
@@ -35,10 +37,11 @@ async function request<T>(
   method: string,
   path: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
@@ -100,3 +103,43 @@ export async function confirmChildProfile(
 }
 
 export { ApiError };
+
+// ── UC-002: Child sign-in ────────────────────────────────────────────────────
+
+/** Sign in a child with their ID and PIN. Returns a server-side child session. */
+export async function signInChild(
+  req: SignInChildRequest,
+): Promise<SignInChildResponse> {
+  return request<SignInChildResponse>('POST', '/child-sessions', req);
+}
+
+/** Sign out the currently active child session. */
+export async function signOutChild(sessionToken: string): Promise<void> {
+  return request<void>('DELETE', '/child-sessions/current', undefined, {
+    'X-Numnia-Session': sessionToken,
+  });
+}
+
+/** Set the PIN for a child profile (parent action). */
+export async function setChildPin(
+  parentId: string,
+  childId: string,
+  pin: string,
+): Promise<void> {
+  return request<void>(
+    'POST',
+    `/parents/${parentId}/child-profiles/${childId}/pin`,
+    { pin },
+  );
+}
+
+/** Release the lockout on a child profile (parent action). */
+export async function releaseChildLock(
+  parentId: string,
+  childId: string,
+): Promise<void> {
+  return request<void>(
+    'POST',
+    `/parents/${parentId}/child-profiles/${childId}/release-lock`,
+  );
+}
