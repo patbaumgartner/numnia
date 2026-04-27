@@ -7,4 +7,7 @@ public interface StarPointsRepository {
     int balanceOf(UUID childId);
     int addPoints(UUID childId, int delta);
     void setBalance(UUID childId, int balance);
+
+    /** Removes the star-points balance for the given child (UC-011). */
+    boolean deleteByChildId(UUID childId);
 }

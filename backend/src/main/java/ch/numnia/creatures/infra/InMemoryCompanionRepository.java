@@ -22,4 +22,9 @@ public class InMemoryCompanionRepository implements CompanionRepository {
     public void setCompanion(UUID childId, String creatureId) {
         companions.put(childId, creatureId);
     }
+
+    @Override
+    public boolean deleteByChildId(UUID childId) {
+        return companions.remove(childId) != null;
+    }
 }

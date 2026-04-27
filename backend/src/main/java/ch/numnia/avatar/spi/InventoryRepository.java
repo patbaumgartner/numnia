@@ -14,4 +14,7 @@ public interface InventoryRepository {
     List<InventoryEntry> entriesFor(UUID childId);
 
     void recordPurchase(InventoryEntry entry);
+
+    /** Removes all inventory entries for the given child (UC-011). */
+    int deleteByChildId(UUID childId);
 }

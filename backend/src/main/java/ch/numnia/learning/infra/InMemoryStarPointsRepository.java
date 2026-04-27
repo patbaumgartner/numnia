@@ -26,4 +26,9 @@ public class InMemoryStarPointsRepository implements StarPointsRepository {
     public void setBalance(UUID childId, int balance) {
         balances.put(childId, balance);
     }
+
+    @Override
+    public boolean deleteByChildId(UUID childId) {
+        return balances.remove(childId) != null;
+    }
 }

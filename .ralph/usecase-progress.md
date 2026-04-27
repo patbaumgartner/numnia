@@ -844,3 +844,87 @@ Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-010 GR
 - Replace `X-Parent-Id` header placeholder with Spring Security parent-session resolution.
 - Add `/api/test/learning-history` and `/api/test/expire-export` E2E seed helpers so UC-010 scenarios can run end-to-end (currently dry-run only).
 - Schedule `purgeExpired` via `@Scheduled` once persistence lands (currently exposed as service method only).
+
+---
+
+## UC-011 — Parent deletes a child account
+
+### Architect (Phase 1) — summary
+
+- Spec at `docs/use_cases/UC-011-parent-deletes-child-account.md` already complete (3 verbatim Gherkin scenarios, BR-001..BR-004).
+- New module `ch.numnia.deletion` mirroring `ch.numnia.dataexport`: cool-off (24h), opaque signed-link token (≥32 chars), per-module `ChildDataPurger` SPI fan-out (9 implementations: profile, learning-progress, training-session, star-points, inventory, avatar, creature-inventory, companion, child-controls, export-file), audit fan-out, e-mail confirmation + record.
+- IAM extensions: `AuditAction` += `DELETION_REQUESTED / DELETION_CONFIRMED / DELETION_DISCARDED / DELETION_BACKUP_CLEANSED`; `EmailGateway` += 2 deletion-mail methods (no-op stub anonymous class in `IamConfig`).
+- Deferred operational follow-ups: Postgres persistence, real backup-rotation sweeper, Spring Security parent resolution, scheduling of `expirePending` via `@Scheduled`.
+
+### Implementer (Phase 2) — Test First sequence
+
+**Backend (JUnit 6 + Cucumber)**
+
+Tests authored before production code in the same iteration. Bootstrap: `@Autowired` on no-Clock ctor (mirrors UC-010 fix to avoid Cucumber Spring DI failures).
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:30Z | `DeletionServiceTest` — request blocked when parent does not own child (NFR-SEC-003) | RED→GREEN | `UnauthorizedDeletionAccessException` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — request blocked on wrong parent password | GREEN | `InvalidPasswordException` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — request blocked when confirmation word ≠ "DELETE" | GREEN | `InvalidConfirmationWordException` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — request emits cool-off mail + audit `DELETION_REQUESTED` (BR-001/003) | GREEN | gateway + audit recorded |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — request token ≥ 32 chars (BR-001) | GREEN | `assertThat(token.length()).isGreaterThanOrEqualTo(32)` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm purges all 9 data categories (FR-SAFE-005) | GREEN | recording purgers all invoked |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm produces deletion record with date + categories (BR-002) | GREEN | `DeletionRecord.completedAt`, `dataCategories` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm fires `DELETION_CONFIRMED` audit + record mail | GREEN | audit + gateway |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm rejected when token already used | GREEN | `DeletionLinkUnavailableException` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm rejected when token unknown | GREEN | `DeletionLinkUnavailableException` |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — `expirePending` discards expired requests + audit `DELETION_DISCARDED` | GREEN | status DISCARDED + audit |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — confirm of expired request fails with link-unavailable | GREEN | exception |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — child profile remains active after expiry (NFR-SEC-003) | GREEN | profile present |
+| 2026-04-27T18:30Z | `DeletionServiceTest` — `requestDeletion` is idempotent within cool-off (returns active pending) | GREEN | same id reused |
+| 2026-04-27T18:32Z | Cucumber: Successful deletion with cool-off confirmation | GREEN | `Uc011StepDefinitions` |
+| 2026-04-27T18:32Z | Cucumber: Confirmation link expires | GREEN | `Uc011StepDefinitions` (time-travel via `overrideExpiresAt` + `expirePending`) |
+| 2026-04-27T18:32Z | Cucumber: Backups cleansed within rotation window | GREEN | audit `DELETION_BACKUP_CLEANSED` (BR-004) |
+
+Suite: `Tests run: 320, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`) — was 303 before UC-011, +14 unit + 3 cucumber.
+JaCoCo: `verify` GREEN (≥80% line / ≥70% branch).
+
+**Frontend (Vitest + RTL)**
+
+Tests authored before `DeletionPage.tsx`.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:35Z | `DeletionPage` — sign-in gate when no parentId | RED→GREEN | `Bitte zuerst als Elternteil anmelden` |
+| 2026-04-27T18:35Z | `DeletionPage` — Swiss High German copy without sharp s | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T18:35Z | `DeletionPage` — cross-link to UC-010 export | GREEN | `href="/parents/exports/<childId>"` |
+| 2026-04-27T18:35Z | `DeletionPage` — trigger flow with password + DELETE shows cool-off msg (BR-001) | GREEN | `requestChildDeletion` called, `24 Stunden gueltig` |
+| 2026-04-27T18:35Z | `DeletionPage` — error rendered on trigger failure | GREEN | `role="alert"` |
+| 2026-04-27T18:35Z | `DeletionPage` — auto-confirm on `?token=` shows record with categories (BR-002) | GREEN | `confirmChildDeletion` called, `Loeschung abgeschlossen` |
+| 2026-04-27T18:35Z | `DeletionPage` — expired-link error when confirm fails | GREEN | alert text |
+| 2026-04-27T18:35Z | `DeletionPage` — audit-log mention (NFR-PRIV-002) | GREEN | `protokolliert` |
+
+Suite: `Tests: 144 passed (144)` — `pnpm -s test --run` (was 136, +8 for UC-011).
+Build: `pnpm -s build` GREEN.
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:36Z | `e2e/features/UC-011.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T18:36Z | `e2e/steps/uc-011-steps.ts` — backend-driven step bindings | BOUND | dry-run: `36 scenarios (36 skipped), 190 steps (190 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-011 + FR-PAR-005 / FR-SAFE-005 / NFR-PRIV-002 / NFR-SEC-003 / NFR-OPS-002 / BR-001/002/003/004 |
+| Engineering quality | 🟢 | 320 backend tests + 144 frontend tests green; same-iteration test-first sequence; Spring DI uses established `@Autowired` no-Clock-ctor pattern |
+| Security & privacy | 🟢 | Server-side ownership check + parent password + confirmation word "DELETE" (NFR-SEC-003); opaque cool-off token ≥32 chars (BR-001); 24h cool-off enforced; audit fires REQUESTED / CONFIRMED / DISCARDED / BACKUP_CLEANSED with pseudonym-only `childRef` (NFR-PRIV-001); `X-Parent-Id` placeholder header (consistent with UC-009/UC-010) |
+| Pedagogy | n/a | UC-011 has no learning logic |
+| Language | 🟢 | English identifiers; UI Swiss High German with umlauts, no sharp s (asserted) |
+| Operations | 🟡 | In-memory `DeletionRequestRepository`; backup-rotation cleansing modelled by emitting the `DELETION_BACKUP_CLEANSED` audit signal (the production sweeper is operational, outside the application boundary); `expirePending` exposed as service method, scheduling deferred to `@Scheduled` once persistence lands |
+
+Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-011 GREEN):
+
+- Move `DeletionRequest` repository to Postgres + Flyway with the same migration as `ExportFile`.
+- Replace `X-Parent-Id` header placeholder with Spring Security parent-session resolution.
+- Schedule `expirePending` via `@Scheduled` once persistence lands.
+- Wire real production backup sweeper to emit `DELETION_BACKUP_CLEANSED` audit signal and align rotation window with NFR-OPS-002.
+- Add `/api/test/expire-deletion` and `/api/test/backup-rotation` E2E seed helpers so UC-011 scenarios can run end-to-end (currently dry-run only).

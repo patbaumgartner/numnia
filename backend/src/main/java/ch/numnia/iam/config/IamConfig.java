@@ -72,8 +72,34 @@ public class IamConfig {
      */
     @Bean
     public EmailGateway emailGateway() {
-        return (parentEmail, childPseudonym, childOpaqueRef) ->
+        return new EmailGateway() {
+            @Override
+            public void sendAccountLockedNotification(String parentEmail,
+                                                     String childPseudonym,
+                                                     String childOpaqueRef) {
+                // Privacy: never log parentEmail (NFR-PRIV-001).
                 log.warn("EmailGateway (no-op): lock notification for childRef={}", childOpaqueRef);
+            }
+
+            @Override
+            public void sendDeletionConfirmationEmail(String parentEmail,
+                                                     String childPseudonym,
+                                                     String confirmationToken) {
+                // Privacy: never log email or token (NFR-PRIV-001, UC-011).
+                log.warn("EmailGateway (no-op): deletion confirmation requested for pseudonym={}",
+                        childPseudonym);
+            }
+
+            @Override
+            public void sendDeletionRecordEmail(String parentEmail,
+                                                String childPseudonym,
+                                                java.util.Set<String> dataCategories,
+                                                java.time.Instant completedAt) {
+                // Privacy: never log email (NFR-PRIV-001, UC-011 BR-002).
+                log.warn("EmailGateway (no-op): deletion record for pseudonym={} categories={} at={}",
+                        childPseudonym, dataCategories, completedAt);
+            }
+        };
     }
 }
 

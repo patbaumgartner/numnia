@@ -29,4 +29,10 @@ public class InMemoryCreatureInventoryRepository implements CreatureInventoryRep
         LinkedHashSet<String> set = byChild.get(childId);
         return set == null ? Set.of() : Set.copyOf(set);
     }
+
+    @Override
+    public synchronized int deleteByChildId(UUID childId) {
+        LinkedHashSet<String> removed = byChild.remove(childId);
+        return removed == null ? 0 : removed.size();
+    }
 }

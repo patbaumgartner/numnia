@@ -30,4 +30,10 @@ public class InMemoryInventoryRepository implements InventoryRepository {
     public void recordPurchase(InventoryEntry entry) {
         byChild.computeIfAbsent(entry.childId(), id -> new CopyOnWriteArrayList<>()).add(entry);
     }
+
+    @Override
+    public int deleteByChildId(UUID childId) {
+        List<InventoryEntry> removed = byChild.remove(childId);
+        return removed == null ? 0 : removed.size();
+    }
 }

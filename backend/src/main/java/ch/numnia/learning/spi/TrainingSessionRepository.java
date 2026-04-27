@@ -16,4 +16,7 @@ public interface TrainingSessionRepository {
      * operation. Used by the progress aggregation (UC-008).
      */
     List<TrainingSession> findEndedByChildAndOperation(UUID childId, Operation operation);
+
+    /** Removes all training-session rows for the given child (UC-011). */
+    int deleteByChildId(UUID childId);
 }

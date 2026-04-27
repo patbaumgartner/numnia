@@ -23,4 +23,9 @@ public class InMemoryChildControlsRepository implements ChildControlsRepository 
     public void save(ChildControls controls) {
         store.put(controls.childId(), controls);
     }
+
+    @Override
+    public boolean deleteByChildId(UUID childId) {
+        return store.remove(childId) != null;
+    }
 }

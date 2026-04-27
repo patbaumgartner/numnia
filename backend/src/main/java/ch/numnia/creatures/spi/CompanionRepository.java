@@ -9,4 +9,7 @@ public interface CompanionRepository {
     Optional<String> findCompanion(UUID childId);
 
     void setCompanion(UUID childId, String creatureId);
+
+    /** Removes the active companion for the given child (UC-011). */
+    boolean deleteByChildId(UUID childId);
 }

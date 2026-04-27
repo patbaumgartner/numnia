@@ -27,4 +27,9 @@ public class InMemoryAvatarConfigurationRepository implements AvatarConfiguratio
     public Optional<String> equippedAt(UUID childId, String slot) {
         return Optional.ofNullable(equipped.getOrDefault(childId, Map.of()).get(slot));
     }
+
+    @Override
+    public boolean deleteByChildId(UUID childId) {
+        return equipped.remove(childId) != null;
+    }
 }

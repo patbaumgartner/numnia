@@ -25,6 +25,7 @@ import ShopPage from './pages/ShopPage';
 import ProgressPage from './pages/ProgressPage';
 import ParentControlsPage from './pages/ParentControlsPage';
 import ExportPage from './pages/ExportPage';
+import DeletionPage from './pages/DeletionPage';
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/parents/controls/:childId" element={<ParentControlsPage />} />
         {/* UC-010: Parent data export (JSON / PDF) */}
         <Route path="/parents/exports/:childId" element={<ExportPage />} />
+        <Route path="/parents/deletion/:childId" element={<DeletionPage />} />
       </Routes>
     </>
   );
