@@ -12,9 +12,11 @@ import java.util.UUID;
 public class TestScenarioContext {
 
     private UUID childId;
+    private UUID parentId;
 
     public void reset() {
         childId = null;
+        parentId = null;
     }
 
     public void setChildId(UUID childId) {
@@ -23,5 +25,13 @@ public class TestScenarioContext {
 
     public UUID childId() {
         return childId;
+    }
+
+    public void setParentId(UUID parentId) {
+        this.parentId = parentId;
+    }
+
+    public UUID parentId() {
+        return parentId;
     }
 }

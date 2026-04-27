@@ -23,6 +23,7 @@ import GalleryPage from './pages/GalleryPage';
 import AvatarPage from './pages/AvatarPage';
 import ShopPage from './pages/ShopPage';
 import ProgressPage from './pages/ProgressPage';
+import ParentControlsPage from './pages/ParentControlsPage';
 
 export default function App() {
   return (
@@ -57,6 +58,8 @@ export default function App() {
         <Route path="/shop" element={<ShopPage />} />
         {/* UC-008: Progress view */}
         <Route path="/progress" element={<ProgressPage />} />
+        {/* UC-009: Parent daily limit + risk controls */}
+        <Route path="/parents/controls/:childId" element={<ParentControlsPage />} />
       </Routes>
     </>
   );
