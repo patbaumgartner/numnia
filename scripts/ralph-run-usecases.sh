@@ -63,12 +63,32 @@ USER_VERIFY_CMD='set -e
   && (cd frontend && pnpm -s build)'
 USER_VERIFY_CMD="${RALPH_VERIFY_CMD:-$USER_VERIFY_CMD}"
 VERIFY_CMD="set -e
-for f in '$EVENT_LOG' '$EVENT_JSONL' '$LOG'; do
-  if [ -f \"\$f\" ] && grep -q '<promise>${PROMISE}</promise>' \"\$f\"; then
-    echo \"verify: promise <${PROMISE}> already recorded in \$f — terminating loop.\" >&2
+# Promise watchdog (belt-and-braces; Ralph >=0.2 already stops on <promise>).
+# We only inspect AIResponseEvent text in the structured JSONL stream so the
+# guard cannot trip on the prompt template, tool-call echoes or our own grep
+# results that happen to mention the literal phrase.
+if [ -f '$EVENT_JSONL' ] && command -v python3 >/dev/null 2>&1; then
+  if python3 -c \"
+import json, sys
+needle = '<promise>${PROMISE}</promise>'
+with open('$EVENT_JSONL') as fh:
+    for line in fh:
+        try:
+            o = json.loads(line)
+        except Exception:
+            continue
+        if o.get('type') != 'AIResponseEvent':
+            continue
+        ev = o.get('event') or {}
+        for v in ev.values():
+            if isinstance(v, str) and needle in v:
+                print(needle); sys.exit(0)
+sys.exit(1)
+\" >/dev/null; then
+    echo \"verify: promise <${PROMISE}> emitted in $EVENT_JSONL — terminating loop.\" >&2
     exit 99
   fi
-done
+fi
 ${USER_VERIFY_CMD}"
 VERIFY_TIMEOUT="${RALPH_VERIFY_TIMEOUT:-20m}"
 ITER_TIMEOUT="${RALPH_ITER_TIMEOUT:-45m}"
