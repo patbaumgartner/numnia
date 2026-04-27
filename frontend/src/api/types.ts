@@ -138,3 +138,32 @@ export interface PortalEntryResponse {
   messageCode: string | null;
   reducedMotion: boolean;
 }
+
+// ── UC-006: Creatures gallery and companion ──────────────────────────────────
+
+export interface CreatureResponse {
+  id: string;
+  displayName: string;
+  operation: Operation;
+  sourceWorldId: string;
+}
+
+export interface GalleryEntryResponse extends CreatureResponse {
+  unlocked: boolean;
+  isCompanion: boolean;
+}
+
+export interface GalleryResponse {
+  entries: GalleryEntryResponse[];
+  companion: string | null;
+}
+
+export interface CreatureUnlockResultResponse {
+  newlyUnlocked: CreatureResponse[];
+  consolationAwarded: boolean;
+  starPointsAwarded: number;
+}
+
+export interface PickCompanionResponse {
+  companion: string;
+}

@@ -19,6 +19,7 @@ import ParentDashboardPage from './pages/ParentDashboardPage';
 import TrainingPage from './pages/TrainingPage';
 import AccuracyPage from './pages/AccuracyPage';
 import WorldMapPage from './pages/WorldMapPage';
+import GalleryPage from './pages/GalleryPage';
 
 export default function App() {
   return (
@@ -46,6 +47,8 @@ export default function App() {
         <Route path="/accuracy" element={<AccuracyPage />} />
         {/* UC-005: World map */}
         <Route path="/worlds" element={<WorldMapPage />} />
+        {/* UC-006: Creatures gallery */}
+        <Route path="/gallery" element={<GalleryPage />} />
       </Routes>
     </>
   );

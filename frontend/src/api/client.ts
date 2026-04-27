@@ -27,6 +27,9 @@ import type {
   WorldResponse,
   PortalEntryResponse,
   PortalType,
+  GalleryResponse,
+  CreatureUnlockResultResponse,
+  PickCompanionResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -249,6 +252,42 @@ export async function enterPortal(
   return request<PortalEntryResponse>(
     'POST',
     `/worlds/${encodeURIComponent(worldId)}/portals/${portalType}/enter`,
+    undefined,
+    { 'X-Child-Id': childId },
+  );
+}
+
+// ── UC-006: Creatures gallery and companion ──────────────────────────────────
+
+/** Fetch the gallery (locked + unlocked) for a child (UC-006 step 4). */
+export async function getCreatureGallery(
+  childId: string,
+): Promise<GalleryResponse> {
+  return request<GalleryResponse>('GET', '/creatures', undefined, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** Process unlocks from learning progress (UC-006 main flow steps 1-3). */
+export async function processCreatureUnlocks(
+  childId: string,
+): Promise<CreatureUnlockResultResponse> {
+  return request<CreatureUnlockResultResponse>(
+    'POST',
+    '/creatures/unlocks',
+    undefined,
+    { 'X-Child-Id': childId },
+  );
+}
+
+/** Pick a creature as the active companion (UC-006 step 5, BR-003). */
+export async function pickCompanion(
+  childId: string,
+  creatureId: string,
+): Promise<PickCompanionResponse> {
+  return request<PickCompanionResponse>(
+    'POST',
+    `/creatures/${encodeURIComponent(creatureId)}/companion`,
     undefined,
     { 'X-Child-Id': childId },
   );
