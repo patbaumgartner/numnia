@@ -1,0 +1,5 @@
+#!/bin/sh
+# Maven Wrapper script — generated stub (jar not committed; see .gitignore).
+# Run `mvn wrapper:wrapper` to regenerate the full wrapper including the jar.
+# This stub delegates to the system Maven when the jar is absent.
+exec mvn "$@"

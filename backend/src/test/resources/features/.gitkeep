@@ -1,0 +1,3 @@
+# Gherkin BDD feature files land here.
+# Each file corresponds to one UC (e.g. UC-001-parent-registration.feature).
+# Created before the step definitions and production code (NFR-ENG-002 Test First).

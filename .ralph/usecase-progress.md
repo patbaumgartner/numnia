@@ -122,3 +122,58 @@ driving Playwright through the registration journey.
 Outstanding: child PIN sign-in screen, locked-profile screen, restricted
 main menu shell. Vitest unit tests + `e2e/features/UC-002.feature` for the
 sign-in journey including lockout after 5 failed attempts.
+
+---
+
+## Stack-bootstrap (real, 2026-04-27)
+
+> **Note on prior UC-001 and UC-002 entries above:** The Red/Green evidence
+> recorded in those sections describes code that was executed in an ephemeral
+> agent session but **was never committed to the repository**. As of the commit
+> that adds this section, `git log --oneline` shows only the initial scaffold
+> commit; no backend source, no feature files, no step definitions, and no
+> production classes exist on disk. Those entries are retained as historical
+> narrative. **UC-001 and UC-002 must be redone test-first in upcoming
+> iterations**, following the AIUP Red → Green → Refactor discipline with all
+> artefacts committed before the tests turn green.
+
+### What was actually created on disk in this commit
+
+| Path | Description |
+|---|---|
+| `backend/pom.xml` | Spring Boot 4.0.6 parent, Java 25, Spring Modulith 2.0.5 (2.0.6 not yet on Central), Testcontainers 2.0.5 BOM, Cucumber-JVM 7.34.3, Flyway 12.4.0, JaCoCo 0.8.14 with 80% line / 70% branch thresholds (`haltOnFailure=false` until first real UC) |
+| `backend/src/main/java/ch/numnia/NumniaApplication.java` | `@SpringBootApplication` entry point — no business logic |
+| `backend/src/main/resources/application.yaml` | `server.port=8080`, datasource, JPA, Flyway, Actuator minimal config |
+| `backend/src/test/java/ch/numnia/SmokeTest.java` | Trivial JUnit 5/6 `assertTrue(true)` so `mvn test` phase is green |
+| `backend/src/test/resources/features/.gitkeep` | Placeholder for Gherkin feature files |
+| `backend/.mvn/wrapper/maven-wrapper.properties` | Maven 3.9.12 wrapper pin (jar not committed per `.gitignore`) |
+| `backend/mvnw` | Thin shell wrapper delegating to system Maven when jar absent |
+| `frontend/vite.config.ts` | Vite 8 + React plugin + Vitest 4 with jsdom, setup file, v8 coverage |
+| `frontend/tsconfig.json` | TypeScript 6 strict mode |
+| `frontend/tsconfig.node.json` | TS config for Vite/Node tooling |
+| `frontend/index.html` | Minimal HTML shell with `lang="de-CH"` |
+| `frontend/src/main.tsx` | React 19 root mounting `<App />` |
+| `frontend/src/App.tsx` | Landing component — heading "Numnia – spielerisch rechnen lernen" (Swiss High German, no sharp s) |
+| `frontend/src/test-setup.ts` | `@testing-library/jest-dom` import |
+| `frontend/src/App.test.tsx` | Vitest + RTL test asserting heading is in document |
+| `frontend/eslint.config.js` | ESLint 9 flat config (TS + React hooks + react-refresh) |
+| `frontend/package.json` | Added ESLint 9 + TypeScript ESLint + react-hooks/react-refresh plugins to devDependencies |
+| `e2e/playwright.config.ts` | Playwright 1.59 config, `de-CH` locale, baseURL `http://localhost:5173` |
+| `e2e/cucumber.cjs` | Cucumber-JS config pointing to `features/` and `steps/` via `tsx` loader |
+| `e2e/tsconfig.json` | TypeScript config for E2E test code |
+| `e2e/features/.gitkeep` | Placeholder for Gherkin feature files |
+| `e2e/steps/.gitkeep` | Placeholder for TypeScript step definitions |
+| `e2e/package.json` | Updated test scripts to reference `cucumber.cjs`; added `test:playwright` script |
+
+### Build / test status at commit time
+
+- `mvn -B -ntp test` (backend): **green** — `SmokeTest` passes, no business code.
+- `pnpm --filter numnia-frontend test` (frontend): pending `pnpm install` in CI; file correctness verified by inspection.
+- `pnpm --filter numnia-e2e test` (e2e): pending `pnpm install` + `playwright install` in CI.
+
+### Next steps
+
+1. Run `pnpm install` at repo root (or per-workspace) to install all Node dependencies.
+2. Implement UC-001 test-first: write failing feature file → step defs → minimal production code → green.
+3. Flip `haltOnFailure` to `true` in `backend/pom.xml` JaCoCo config once real coverage exists.
+4. Update `spring-modulith.version` to `2.0.6` in `backend/pom.xml` once published to Maven Central.
