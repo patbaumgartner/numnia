@@ -32,6 +32,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Registration and verification flow — publicly accessible
                 .requestMatchers("/api/parents/**").permitAll()
+                // Child sign-in — publicly accessible (no session exists before sign-in)
+                .requestMatchers("/api/child-sessions").permitAll()
+                // Child sign-out — no Spring Security session check needed;
+                // the SessionInterceptor handles revocation
+                .requestMatchers("/api/child-sessions/**").permitAll()
                 // E2E test helper — publicly accessible (gated by numnia.e2e.enabled in
                 // TestTokenController; never registered in production profile)
                 .requestMatchers("/api/test/**").permitAll()

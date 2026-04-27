@@ -1,16 +1,18 @@
 package ch.numnia.iam.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import ch.numnia.iam.spi.EmailGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
 import java.util.Set;
 
 /**
- * IAM module configuration: password encoder, fantasy-name catalog, avatar catalog.
+ * IAM module configuration: password encoder, fantasy-name catalog, avatar catalog,
+ * and email gateway.
  *
  * <p>Catalogs are currently inline constants (externalization to {@code application.yaml}
  * is deferred — follow-up item in .ralph/usecase-progress.md).
@@ -20,6 +22,8 @@ import java.util.Set;
  */
 @Configuration
 public class IamConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(IamConfig.class);
 
     /**
      * BCrypt password encoder (NFR-SEC-001, NFR-SEC-003).
@@ -56,4 +60,20 @@ public class IamConfig {
     public Set<String> avatarBaseModelCatalog() {
         return Set.of("star", "moon", "sun", "cloud", "wave", "rock", "fire", "wind");
     }
+
+    /**
+     * No-op email gateway for the current implementation (UC-002 lock notification).
+     *
+     * <p>The production implementation (SMTP relay) will replace this bean in a later
+     * iteration. The no-op implementation logs a WARN so missing email sends are visible
+     * in test output without any PII leaking (NFR-PRIV-001: no email address is logged).
+     *
+     * <p>TODO: replace with a real SMTP gateway in UC-009/notifications iteration.
+     */
+    @Bean
+    public EmailGateway emailGateway() {
+        return (parentEmail, childPseudonym, childOpaqueRef) ->
+                log.warn("EmailGateway (no-op): lock notification for childRef={}", childOpaqueRef);
+    }
 }
+

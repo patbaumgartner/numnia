@@ -16,6 +16,10 @@ import ChildProfilePage from './ChildProfilePage';
 import OnboardingCheckEmailPage from './OnboardingCheckEmailPage';
 import ConfirmChildPage from './ConfirmChildPage';
 import DonePage from './DonePage';
+import ChildSignInPage from './ChildSignInPage';
+import ChildLockedPage from './ChildLockedPage';
+import ChildShellPage from './ChildShellPage';
+import ParentDashboardPage from './ParentDashboardPage';
 import * as client from '../api/client';
 
 vi.mock('../api/client', () => ({
@@ -23,6 +27,8 @@ vi.mock('../api/client', () => ({
   verifyEmail: vi.fn(),
   createChildProfile: vi.fn(),
   confirmChildProfile: vi.fn(),
+  signInChild: vi.fn(),
+  signOutChild: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number;
     code: string;
@@ -202,6 +208,118 @@ describe('DonePage', () => {
 
   it('does not contain sharp s', () => {
     renderIn(<DonePage />, '/done', '/done');
+    expect(document.body.textContent).not.toContain('ß');
+  });
+});
+
+// ── UC-002 pages ─────────────────────────────────────────────────────────────
+
+const mockedSignInChild = vi.mocked(client.signInChild);
+const mockedSignOutChild = vi.mocked(client.signOutChild);
+
+describe('ChildSignInPage', () => {
+  it('renders the sign-in form heading', () => {
+    renderIn(<ChildSignInPage />, '/sign-in/child', '/sign-in/child');
+    expect(screen.getByRole('heading', { name: /Als Kind anmelden/i })).toBeInTheDocument();
+  });
+
+  it('does not contain sharp s (NFR-I18N-004)', () => {
+    renderIn(<ChildSignInPage />, '/sign-in/child', '/sign-in/child');
+    expect(document.body.textContent).not.toContain('ß');
+  });
+
+  it('navigates to /child on successful sign-in', async () => {
+    mockedSignInChild.mockResolvedValueOnce({
+      sessionToken: 'tok',
+      childId: 'c-1',
+      role: 'CHILD',
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+    renderIn(<ChildSignInPage />, '/sign-in/child', '/sign-in/child');
+    await user.type(screen.getByLabelText(/Kind-ID/i), 'c-1');
+    await user.type(screen.getByLabelText(/PIN/i), '1234');
+    await user.click(screen.getByRole('button', { name: /Anmelden/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('navigated')).toBeInTheDocument(),
+    );
+    expect(sessionStorage.getItem('numnia_child_session_token')).toBe('tok');
+    expect(sessionStorage.getItem('numnia_child_id')).toBe('c-1');
+  });
+
+  it('navigates to /sign-in/child/locked on 423', async () => {
+    const { ApiError } = await import('../api/client');
+    mockedSignInChild.mockRejectedValueOnce(
+      new ApiError(423, 'PROFILE_LOCKED', 'Locked'),
+    );
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+    renderIn(<ChildSignInPage />, '/sign-in/child', '/sign-in/child');
+    await user.type(screen.getByLabelText(/Kind-ID/i), 'c-1');
+    await user.type(screen.getByLabelText(/PIN/i), '0000');
+    await user.click(screen.getByRole('button', { name: /Anmelden/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('navigated')).toBeInTheDocument(),
+    );
+  });
+});
+
+describe('ChildLockedPage', () => {
+  it('renders locked message', () => {
+    renderIn(<ChildLockedPage />, '/sign-in/child/locked', '/sign-in/child/locked');
+    expect(screen.getByRole('heading', { name: /Profil gesperrt/i })).toBeInTheDocument();
+  });
+
+  it('does not contain sharp s', () => {
+    renderIn(<ChildLockedPage />, '/sign-in/child/locked', '/sign-in/child/locked');
+    expect(document.body.textContent).not.toContain('ß');
+  });
+});
+
+describe('ChildShellPage', () => {
+  it('renders child welcome heading', () => {
+    sessionStorage.setItem('numnia_child_session_token', 'tok');
+    renderIn(<ChildShellPage />, '/child', '/child');
+    expect(
+      screen.getByRole('heading', { name: /Willkommen/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders sign-out button', () => {
+    sessionStorage.setItem('numnia_child_session_token', 'tok');
+    renderIn(<ChildShellPage />, '/child', '/child');
+    expect(screen.getByRole('button', { name: /Abmelden/i })).toBeInTheDocument();
+  });
+
+  it('navigates to /sign-in/child after sign-out', async () => {
+    sessionStorage.setItem('numnia_child_session_token', 'tok');
+    mockedSignOutChild.mockResolvedValueOnce(undefined);
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+    renderIn(<ChildShellPage />, '/child', '/child');
+    await user.click(screen.getByRole('button', { name: /Abmelden/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('navigated')).toBeInTheDocument(),
+    );
+  });
+
+  it('does not contain sharp s', () => {
+    renderIn(<ChildShellPage />, '/child', '/child');
+    expect(document.body.textContent).not.toContain('ß');
+  });
+});
+
+describe('ParentDashboardPage', () => {
+  it('renders parent greeting', () => {
+    renderIn(<ParentDashboardPage />, '/parents/me', '/parents/me');
+    expect(
+      screen.getByRole('heading', { name: /Hallo, Elternteil/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not contain sharp s', () => {
+    renderIn(<ParentDashboardPage />, '/parents/me', '/parents/me');
     expect(document.body.textContent).not.toContain('ß');
   });
 });

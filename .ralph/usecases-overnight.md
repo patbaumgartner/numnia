@@ -81,7 +81,7 @@ role for the duration of the phase.
 
 ## Stop condition
 
-When UC-001 through UC-002 are all green, documented and committed, emit
+When UC-003 through UC-005 are all green, documented and committed, emit
 exactly:
 
 <promise>ALL_USE_CASES_DONE</promise>

@@ -1,5 +1,5 @@
 /**
- * App — application shell with React Router 7 routes for UC-001.
+ * App — application shell with React Router 7 routes for UC-001 and UC-002.
  *
  * UI copy is Swiss High German with umlauts, without sharp s (NFR-I18N-002,
  * NFR-I18N-004). Business screens are added per UC implementation.
@@ -12,6 +12,10 @@ import ChildProfilePage from './pages/ChildProfilePage';
 import OnboardingCheckEmailPage from './pages/OnboardingCheckEmailPage';
 import ConfirmChildPage from './pages/ConfirmChildPage';
 import DonePage from './pages/DonePage';
+import ChildSignInPage from './pages/ChildSignInPage';
+import ChildLockedPage from './pages/ChildLockedPage';
+import ChildShellPage from './pages/ChildShellPage';
+import ParentDashboardPage from './pages/ParentDashboardPage';
 
 export default function App() {
   return (
@@ -29,6 +33,11 @@ export default function App() {
         <Route path="/onboarding/check-email" element={<OnboardingCheckEmailPage />} />
         <Route path="/onboarding/confirm" element={<ConfirmChildPage />} />
         <Route path="/onboarding/done" element={<DonePage />} />
+        {/* UC-002: child sign-in */}
+        <Route path="/sign-in/child" element={<ChildSignInPage />} />
+        <Route path="/sign-in/child/locked" element={<ChildLockedPage />} />
+        <Route path="/child" element={<ChildShellPage />} />
+        <Route path="/parents/me" element={<ParentDashboardPage />} />
       </Routes>
     </>
   );

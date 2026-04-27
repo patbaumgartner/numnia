@@ -46,6 +46,36 @@ public class IamExceptionHandler {
                 .body(new ErrorResponse("PARENT_NOT_FOUND", ex.getMessage()));
     }
 
+    // ── UC-002 exception handlers ────────────────────────────────────────
+
+    @ExceptionHandler(ChildNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleChildNotFound(ChildNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("CHILD_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPinException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPin(InvalidPinException ex) {
+        // 401 Unauthorized — wrong credentials
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("INVALID_PIN", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProfileLockedException.class)
+    public ResponseEntity<ErrorResponse> handleProfileLocked(ProfileLockedException ex) {
+        // 423 Locked — profile is locked after too many failed attempts (BR-004)
+        return ResponseEntity.status(HttpStatus.LOCKED)
+                .body(new ErrorResponse("PROFILE_LOCKED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedParentException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedParent(UnauthorizedParentException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("FORBIDDEN", ex.getMessage()));
+    }
+
+    // ── generic handlers ─────────────────────────────────────────────────
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArg(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

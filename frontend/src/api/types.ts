@@ -46,3 +46,17 @@ export interface ErrorResponse {
   error: string;
   message: string;
 }
+
+// ── UC-002: Child sign-in ────────────────────────────────────────────────────
+
+export interface SignInChildRequest {
+  childId: string;
+  pin: string;
+}
+
+export interface SignInChildResponse {
+  sessionToken: string;
+  childId: string;
+  role: string;
+  expiresAt: string;
+}
