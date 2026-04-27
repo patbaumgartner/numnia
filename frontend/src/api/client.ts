@@ -38,6 +38,8 @@ import type {
   ColorPalette,
   ChildControlsResponse,
   ChildControlsRequest,
+  ExportFormat,
+  ExportSummaryResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -398,6 +400,20 @@ export async function updateChildControls(
     'PUT',
     `/parents/me/children/${encodeURIComponent(childId)}/controls`,
     body,
+    { 'X-Parent-Id': parentId },
+  );
+}
+
+/** UC-010: trigger an export of the child's data in JSON or PDF. */
+export async function triggerExport(
+  parentId: string,
+  childId: string,
+  format: ExportFormat,
+): Promise<ExportSummaryResponse[]> {
+  return request<ExportSummaryResponse[]>(
+    'POST',
+    `/parents/me/children/${encodeURIComponent(childId)}/exports`,
+    { format },
     { 'X-Parent-Id': parentId },
   );
 }
