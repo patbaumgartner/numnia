@@ -22,6 +22,7 @@ import WorldMapPage from './pages/WorldMapPage';
 import GalleryPage from './pages/GalleryPage';
 import AvatarPage from './pages/AvatarPage';
 import ShopPage from './pages/ShopPage';
+import ProgressPage from './pages/ProgressPage';
 
 export default function App() {
   return (
@@ -54,6 +55,8 @@ export default function App() {
         {/* UC-007: Avatar customization and shop */}
         <Route path="/avatar" element={<AvatarPage />} />
         <Route path="/shop" element={<ShopPage />} />
+        {/* UC-008: Progress view */}
+        <Route path="/progress" element={<ProgressPage />} />
       </Routes>
     </>
   );

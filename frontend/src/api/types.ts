@@ -201,3 +201,32 @@ export interface PurchaseResultResponse {
   itemId: string;
   starPointsBalance: number;
 }
+
+// ── UC-008: progress view ────────────────────────────────────────────────
+
+export type ColorPalette = 'DEFAULT' | 'DEUTERANOPIA' | 'PROTANOPIA' | 'TRITANOPIA';
+
+export type MasteryStatus = 'NOT_STARTED' | 'IN_CONSOLIDATION' | 'MASTERED';
+
+export type ProgressOperation =
+  | 'ADDITION'
+  | 'SUBTRACTION'
+  | 'MULTIPLICATION'
+  | 'DIVISION';
+
+export interface OperationProgressResponse {
+  operation: ProgressOperation;
+  totalSessions: number;
+  totalTasks: number;
+  correctTasks: number;
+  accuracy: number;
+  masteryStatus: MasteryStatus;
+  currentDifficulty: number;
+}
+
+export interface ProgressOverviewResponse {
+  childId: string;
+  palette: ColorPalette;
+  empty: boolean;
+  entries: OperationProgressResponse[];
+}

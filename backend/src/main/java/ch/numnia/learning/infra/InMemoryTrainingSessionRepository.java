@@ -1,9 +1,11 @@
 package ch.numnia.learning.infra;
 
+import ch.numnia.learning.domain.Operation;
 import ch.numnia.learning.domain.TrainingSession;
 import ch.numnia.learning.spi.TrainingSessionRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,5 +25,14 @@ public class InMemoryTrainingSessionRepository implements TrainingSessionReposit
     @Override
     public Optional<TrainingSession> findById(UUID id) {
         return Optional.ofNullable(store.get(id));
+    }
+
+    @Override
+    public List<TrainingSession> findEndedByChildAndOperation(UUID childId, Operation operation) {
+        return store.values().stream()
+                .filter(s -> s.childId().equals(childId))
+                .filter(s -> s.operation() == operation)
+                .filter(s -> s.endedAt() != null)
+                .toList();
     }
 }
