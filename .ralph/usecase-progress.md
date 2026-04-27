@@ -371,3 +371,74 @@ Recommendation: **merge**. Follow-ups:
 - Externalise explanation copy to a content catalogue (per operation/difficulty).
 - Add a parent-area toggle to suggest accuracy-mode after configurable error streak (UC-009).
 - Wire actual Babylon.js animation behind `Erklaerung zeigen` once asset pipeline lands (UC-005).
+
+## UC-005 — Child enters a world through a portal
+
+### Architect (Phase 1)
+
+- 2026-04-28T08:30Z — UC-005 spec already complete and approved.
+- FR/NFR plan: FR-WORLD-001..005, NFR-PERF-002, NFR-A11Y-002, NFR-A11Y-003.
+- 3 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+New module `ch.numnia.worlds` (domain / spi / infra / service / api). Tests
+authored before production classes; failing-then-green confirmed by
+progressive `mvn test` runs against intermediate states (compile RED →
+unit RED → cucumber RED → GREEN).
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T08:35Z | `WorldService.listWorlds` returns the three R1 worlds | RED→GREEN | `WorldServiceTest.listWorlds_returnsThreeReleaseOneWorlds` |
+| 2026-04-28T08:35Z | BR-001 release-rule: DUEL portal locked in R1 | RED→GREEN | `enterDuelPortal_isLockedWithComingLater` |
+| 2026-04-28T08:35Z | BR-002 level rule: required level not yet reached | RED→GREEN | `enterTraining_belowRequiredLevel_isLockedWithLevelTooLow` |
+| 2026-04-28T08:35Z | BR-003 task pool must exist | RED→GREEN | `enterTraining_withoutTaskPool_isLockedWithPoolMissing` |
+| 2026-04-28T08:35Z | BR-005 reduced-motion accessibility flag | RED→GREEN | `enterTraining_withReducedMotion_isOpenedAndFlagsReducedMotion` |
+| 2026-04-28T08:35Z | Audit trail on every attempt (open / locked / reduced-motion) | RED→GREEN | `WorldAuditRepository` assertions across the 8 unit tests |
+| 2026-04-28T08:36Z | Cucumber: Training portal opens when rules are satisfied | GREEN | `Uc005StepDefinitions` |
+| 2026-04-28T08:36Z | Cucumber: Reduced-motion reduces animations | GREEN | `Uc005StepDefinitions` |
+| 2026-04-28T08:36Z | Cucumber: Locked portal stays closed | GREEN | `Uc005StepDefinitions` |
+
+Suite: `Tests run: 209, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp -q test`).
+
+**Frontend (Vitest + RTL)**
+
+Tests authored before `WorldMapPage.tsx`.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T08:40Z | `WorldMapPage` — sign-in gate when no childId | RED→GREEN | `/Bitte zuerst anmelden/` |
+| 2026-04-28T08:40Z | `WorldMapPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-28T08:40Z | `WorldMapPage` — three worlds rendered with difficulty hints | GREEN | mocked `listWorlds` → 3 cards |
+| 2026-04-28T08:40Z | `WorldMapPage` — training button navigates to `/training` on opened portal | GREEN | mocked `enterPortal` → `target=PRACTICE_STAGE`, `getByTestId('at-training')` |
+| 2026-04-28T08:40Z | `WorldMapPage` — locked R2 portal shows "Kommt spaeter" + no nav | GREEN | DUEL portal renders notice; route stub not reached |
+| 2026-04-28T08:40Z | `WorldMapPage` — reduced-motion class applied when backend reports it | GREEN | `container.querySelector('.reduced-motion')` non-null |
+
+Suite: `Tests: 95 passed (95)` — `pnpm -s test --run` (was 89, +6 for UC-005).
+Build: `pnpm -s build` GREEN (`vite build` 219 ms).
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T08:42Z | `e2e/features/UC-005.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-28T08:42Z | `e2e/steps/uc-005-steps.ts` — backend-driven step bindings | BOUND | dry-run: `17 scenarios (17 skipped), 97 steps (97 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-005 + FR-WORLD-001..005, NFR-PERF-002, NFR-A11Y-002/003 |
+| Engineering quality | 🟢 | 209 backend tests + 95 frontend tests green; Test First evident (per-behaviour RED→GREEN); 8 dedicated unit tests around the new module |
+| Security & privacy | 🟡 | No PII in logs; child identification via UUID only; `X-Child-Id` placeholder header continues until UC-009 wires Spring Security on `/api/worlds/**` |
+| Pedagogy | 🟢 | BR-001 (release rule) and BR-002 (level rule) enforced server-side and config-friendly; rule order audits each branch distinctly |
+| Language | 🟢 | English identifiers; Swiss High German UI with umlauts (`Pilzdschungel`, `Kristallhoehle`, `Wolkeninsel`, `Kommt spaeter`), no sharp s |
+| Operations | 🟡 | World catalogue still in `StaticWorldCatalog`; will move to YAML with content catalogue (UC-007) |
+
+Recommendation: **merge**. Follow-ups:
+
+- Add `/api/test/learning-progress` and `/api/test/reduced-motion` E2E helpers to make UC-005 scenarios fully runnable end-to-end (currently dry-run only).
+- Externalise the world catalogue to `application.yaml` once UC-007 lands.
+- Wire HTTP-level child-session enforcement on `/api/worlds/**` once Spring Security arrives (UC-009).

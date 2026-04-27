@@ -40,6 +40,10 @@ public class SecurityConfig {
                 // E2E test helper — publicly accessible (gated by numnia.e2e.enabled in
                 // TestTokenController; never registered in production profile)
                 .requestMatchers("/api/test/**").permitAll()
+                // Worlds — public for now; child-session enforcement moves behind
+                // Spring Security in UC-009 (matches /api/training).
+                .requestMatchers("/api/worlds", "/api/worlds/**").permitAll()
+                .requestMatchers("/api/training", "/api/training/**").permitAll()
                 // Actuator health endpoint
                 .requestMatchers("/actuator/health").permitAll()
                 // All other requests require authentication (expanded in UC-009)
