@@ -266,3 +266,27 @@ export interface ExportSummaryResponse {
 export interface TriggerExportRequest {
   format: ExportFormat;
 }
+
+// ── UC-011: parent-initiated child-account deletion ──────────────────────
+
+export type DeletionStatus = 'PENDING' | 'CONFIRMED' | 'DISCARDED';
+
+export interface DeletionTriggerRequest {
+  password: string;
+  confirmationWord: string;
+}
+
+export interface DeletionRequestSummary {
+  id: string;
+  token: string;
+  signedUrlPath: string;
+  expiresAt: string;
+  status: DeletionStatus;
+}
+
+export interface DeletionRecordResponse {
+  id: string;
+  childPseudonym: string;
+  completedAt: string;
+  dataCategories: string[];
+}

@@ -24,4 +24,33 @@ public interface EmailGateway {
     void sendAccountLockedNotification(String parentEmail,
                                        String childPseudonym,
                                        String childOpaqueRef);
+
+    /**
+     * Sends the deletion confirmation email containing the cool-off link
+     * (UC-011 main flow step 3, BR-001). The email targets the parent's
+     * verified address; implementations MUST never log the email address or
+     * the confirmation token (NFR-PRIV-001).
+     *
+     * @param parentEmail        Parent's email address — send target, never logged
+     * @param childPseudonym     Fantasy name (pseudonym) of the child to delete
+     * @param confirmationToken  Opaque cool-off confirmation token — never logged
+     */
+    void sendDeletionConfirmationEmail(String parentEmail,
+                                       String childPseudonym,
+                                       String confirmationToken);
+
+    /**
+     * Sends the deletion record after a successful deletion (UC-011 BR-002:
+     * date, subject, affected data categories). Implementations MUST never
+     * log the email address (NFR-PRIV-001).
+     *
+     * @param parentEmail     Parent's email address — send target, never logged
+     * @param childPseudonym  Fantasy name (pseudonym) of the deleted child
+     * @param dataCategories  Set of data-category labels touched during deletion
+     * @param completedAt     Timestamp at which deletion completed
+     */
+    void sendDeletionRecordEmail(String parentEmail,
+                                 String childPseudonym,
+                                 java.util.Set<String> dataCategories,
+                                 java.time.Instant completedAt);
 }

@@ -5,8 +5,10 @@ import ch.numnia.learning.domain.Operation;
 import ch.numnia.learning.spi.LearningProgressRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,5 +34,18 @@ public class InMemoryLearningProgressRepository implements LearningProgressRepos
 
     private static String key(UUID childId, Operation op) {
         return childId + "::" + op.name();
+    }
+
+    @Override
+    public int deleteByChildId(UUID childId) {
+        String prefix = childId + "::";
+        int removed = 0;
+        for (String k : Set.copyOf(store.keySet())) {
+            if (k.startsWith(prefix)) {
+                store.remove(k);
+                removed++;
+            }
+        }
+        return removed;
     }
 }

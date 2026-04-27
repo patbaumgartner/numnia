@@ -21,4 +21,7 @@ public interface ExportFileRepository {
     List<ExportFile> findAll();
 
     void delete(UUID id);
+
+    /** Removes all export files belonging to the given child (UC-011). */
+    int deleteByChildId(UUID childId);
 }

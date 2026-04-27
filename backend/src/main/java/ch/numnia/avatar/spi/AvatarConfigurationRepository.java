@@ -16,4 +16,7 @@ public interface AvatarConfigurationRepository {
     void equip(UUID childId, String slot, String itemId);
 
     Optional<String> equippedAt(UUID childId, String slot);
+
+    /** Removes the avatar configuration for the given child (UC-011). */
+    boolean deleteByChildId(UUID childId);
 }

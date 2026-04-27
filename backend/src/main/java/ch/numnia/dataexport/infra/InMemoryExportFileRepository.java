@@ -57,4 +57,17 @@ public class InMemoryExportFileRepository implements ExportFileRepository {
             tokenIndex.remove(removed.token());
         }
     }
+
+    @Override
+    public int deleteByChildId(UUID childId) {
+        int removed = 0;
+        for (ExportFile f : List.copyOf(byId.values())) {
+            if (f.childId().equals(childId)) {
+                byId.remove(f.id());
+                tokenIndex.remove(f.token());
+                removed++;
+            }
+        }
+        return removed;
+    }
 }

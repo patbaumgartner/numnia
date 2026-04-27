@@ -16,4 +16,7 @@ public interface CreatureInventoryRepository {
     List<String> unlockedCreatureIds(UUID childId);
 
     Set<String> unlockedSet(UUID childId);
+
+    /** Removes the creature inventory for the given child (UC-011). */
+    int deleteByChildId(UUID childId);
 }

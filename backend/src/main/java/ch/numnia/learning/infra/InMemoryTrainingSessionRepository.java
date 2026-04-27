@@ -35,4 +35,16 @@ public class InMemoryTrainingSessionRepository implements TrainingSessionReposit
                 .filter(s -> s.endedAt() != null)
                 .toList();
     }
+
+    @Override
+    public int deleteByChildId(UUID childId) {
+        int removed = 0;
+        for (TrainingSession s : List.copyOf(store.values())) {
+            if (s.childId().equals(childId)) {
+                store.remove(s.id());
+                removed++;
+            }
+        }
+        return removed;
+    }
 }

@@ -40,6 +40,8 @@ import type {
   ChildControlsRequest,
   ExportFormat,
   ExportSummaryResponse,
+  DeletionRequestSummary,
+  DeletionRecordResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -414,6 +416,34 @@ export async function triggerExport(
     'POST',
     `/parents/me/children/${encodeURIComponent(childId)}/exports`,
     { format },
+    { 'X-Parent-Id': parentId },
+  );
+}
+
+/** UC-011: trigger a deletion (cool-off mail + signed confirmation link). */
+export async function requestChildDeletion(
+  parentId: string,
+  childId: string,
+  password: string,
+  confirmationWord: string,
+): Promise<DeletionRequestSummary> {
+  return request<DeletionRequestSummary>(
+    'POST',
+    `/parents/me/children/${encodeURIComponent(childId)}/deletion`,
+    { password, confirmationWord },
+    { 'X-Parent-Id': parentId },
+  );
+}
+
+/** UC-011: confirm a previously triggered deletion via the cool-off token. */
+export async function confirmChildDeletion(
+  parentId: string,
+  token: string,
+): Promise<DeletionRecordResponse> {
+  return request<DeletionRecordResponse>(
+    'POST',
+    `/parents/me/deletions/${encodeURIComponent(token)}/confirm`,
+    undefined,
     { 'X-Parent-Id': parentId },
   );
 }
