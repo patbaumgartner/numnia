@@ -1,27 +1,43 @@
 # Numnia local orchestration (per ADR-008).
 # Production stack pins live in docs/adr/ADR-001 and arc42 §2.1.
+#
+# Profiles:
+#   infra     postgres + redis + objectstore only (use when running apps
+#             locally via `mvn spring-boot:run` and `pnpm dev`)
+#   full      everything including the backend and frontend containers
+#
+# Default behaviour (no --profile flag): infra services only, so that
+# `docker compose up -d` keeps the existing developer flow.
+#
+# Usage:
+#   docker compose up -d                  # infra only (default)
+#   docker compose --profile full up -d   # full containerised stack
+
+name: numnia
 
 services:
   postgres:
     image: postgres:18.3-alpine
+    profiles: [ "infra", "full" ]
     environment:
-      POSTGRES_DB: numnia
-      POSTGRES_USER: numnia
-      POSTGRES_PASSWORD: numnia
+      POSTGRES_DB: ${POSTGRES_DB:-numnia}
+      POSTGRES_USER: ${POSTGRES_USER:-numnia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-numnia}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U numnia -d numnia" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-numnia} -d ${POSTGRES_DB:-numnia}" ]
       interval: 5s
       timeout: 3s
       retries: 10
 
   redis:
     image: redis:8.6-alpine
+    profiles: [ "infra", "full" ]
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -29,22 +45,70 @@ services:
       retries: 10
 
   # Object storage: interim MinIO pin per ADR-001.
-  # Target migration: Garage or SeaweedFS before launch.
+  # Note: ADR-001 referenced 2025-10-15, but that tag is not on Docker Hub
+  # (MinIO repo archive cut over earlier). Using the last actually-published
+  # OSS RELEASE tag. Target migration: Garage or SeaweedFS before launch.
   objectstore:
-    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    profiles: [ "infra", "full" ]
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: numnia
-      MINIO_ROOT_PASSWORD: numnia-dev-secret
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-numnia}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-numnia-dev-secret}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - object-data:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 10s
       timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: numnia/backend:dev
+    profiles: [ "full" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-numnia}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-numnia}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-numnia}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: numnia/frontend:dev
+    profiles: [ "full" ]
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1/healthz | grep -q ok || exit 1" ]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
       retries: 5
 
 volumes:

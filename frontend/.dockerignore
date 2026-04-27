@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-node/
+coverage/
+.vite/
+*.tsbuildinfo
+.idea/
+.vscode/
+.git/
+.gitignore
