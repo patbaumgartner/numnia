@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: numnia
+  datasource:
+    url: jdbc:postgresql://localhost:5432/numnia
+    username: numnia
+    password: numnia
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
