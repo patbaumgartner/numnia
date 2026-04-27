@@ -18,6 +18,11 @@ import type {
   SignInChildRequest,
   SignInChildResponse,
   ErrorResponse,
+  StartTrainingSessionRequest,
+  StartTrainingSessionResponse,
+  TrainingTaskResponse,
+  AnswerResultResponse,
+  SessionSummaryResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -141,5 +146,60 @@ export async function releaseChildLock(
   return request<void>(
     'POST',
     `/parents/${parentId}/child-profiles/${childId}/release-lock`,
+  );
+}
+
+// ── UC-003: Training mode ────────────────────────────────────────────────────
+
+/** Start a new training session for the given child + operation. */
+export async function startTrainingSession(
+  childId: string,
+  req: StartTrainingSessionRequest,
+): Promise<StartTrainingSessionResponse> {
+  return request<StartTrainingSessionResponse>('POST', '/training/sessions', req, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** Generate the next task for an active session. */
+export async function nextTrainingTask(
+  sessionId: string,
+): Promise<TrainingTaskResponse> {
+  return request<TrainingTaskResponse>(
+    'POST',
+    `/training/sessions/${sessionId}/tasks`,
+  );
+}
+
+/** Submit a child's answer to the current task. */
+export async function submitTrainingAnswer(
+  sessionId: string,
+  answer: number,
+  responseTimeMs: number,
+): Promise<AnswerResultResponse> {
+  return request<AnswerResultResponse>(
+    'POST',
+    `/training/sessions/${sessionId}/answers`,
+    { answer, responseTimeMs },
+  );
+}
+
+/** Notify the backend that the answer timer expired. */
+export async function submitTrainingTimeout(
+  sessionId: string,
+): Promise<AnswerResultResponse> {
+  return request<AnswerResultResponse>(
+    'POST',
+    `/training/sessions/${sessionId}/timeouts`,
+  );
+}
+
+/** End the session and obtain a summary (UC-003 step 12). */
+export async function endTrainingSession(
+  sessionId: string,
+): Promise<SessionSummaryResponse> {
+  return request<SessionSummaryResponse>(
+    'POST',
+    `/training/sessions/${sessionId}/end`,
   );
 }

@@ -4,8 +4,10 @@
  * Provides a Playwright Browser + Page instance per scenario,
  * plus helper methods for interacting with the Numnia backend test API.
  */
-import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
-import { Browser, BrowserContext, Page, chromium } from '@playwright/test';
+import { setWorldConstructor, World } from '@cucumber/cucumber';
+import type { IWorldOptions } from '@cucumber/cucumber';
+import { chromium } from '@playwright/test';
+import type { Browser, BrowserContext, Page } from '@playwright/test';
 
 const BASE_URL = process.env.NUMNIA_FRONTEND_URL ?? 'http://localhost:5173';
 const API_URL = process.env.NUMNIA_BACKEND_URL ?? 'http://localhost:8080';

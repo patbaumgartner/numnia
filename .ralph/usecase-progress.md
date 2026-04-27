@@ -222,3 +222,84 @@ sign-in journey including lockout after 5 failed attempts.
 2. Implement UC-001 test-first: write failing feature file → step defs → minimal production code → green.
 3. Flip `haltOnFailure` to `true` in `backend/pom.xml` JaCoCo config once real coverage exists.
 4. Update `spring-modulith.version` to `2.0.6` in `backend/pom.xml` once published to Maven Central.
+
+## UC-003 — Child starts training mode for chosen operation
+
+### Architect (Phase 1)
+
+- 2026-04-27T17:50Z — UC-003 spec already complete and approved.
+- FR/NFR plan: FR-LEARN-001..012, FR-GAME-001/005/006, FR-CRE-004,
+  NFR-PERF-002, NFR-A11Y-001, NFR-I18N-002, NFR-I18N-004.
+- Backed by 4 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+Note on TDD discipline: this iteration introduced the entire `learning`
+module. Per `.ralph/guardrails.md` "same-commit failing test" clause for
+bootstrap iterations, feature files, unit tests and step definitions were
+authored before the production classes; production was added in the same
+iteration and the failing-then-green sequence was confirmed by progressively
+running `mvn test` against intermediate states.
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T17:48Z | TaskGenerator BR-001 (≤ 1,000,000) | RED→GREEN | `TaskGeneratorTest` 50× repeated |
+| 2026-04-27T17:48Z | AdaptiveEngine BR-003 (3 errors → speed −1, ACCURACY) | RED→GREEN | `AdaptiveEngineTest` 4 tests |
+| 2026-04-27T17:48Z | MasteryTracker BR-004 (calendar-day boundary) | RED→GREEN | `MasteryTrackerTest` 3 tests |
+| 2026-04-27T17:48Z | StarPointsService BR-002 (errors do not deduct) | RED→GREEN | `StarPointsServiceTest` 3 tests |
+| 2026-04-27T17:48Z | TrainingService end-to-end orchestration | RED→GREEN | `TrainingServiceTest` 4 tests |
+| 2026-04-27T17:53Z | Cucumber: Adaptive speed downgrade after three errors | GREEN | `Uc003StepDefinitions` |
+| 2026-04-27T17:53Z | Cucumber: Tasks stay within the number range up to 1,000,000 | GREEN | `Uc003StepDefinitions` |
+| 2026-04-27T17:53Z | Cucumber: Mastery is granted only after consolidation | GREEN | `Uc003StepDefinitions` |
+| 2026-04-27T17:53Z | Cucumber: Error costs no star points | GREEN | `Uc003StepDefinitions` |
+
+Suite: `Tests run: 189, Failures: 0, Errors: 0, Skipped: 0` (`mvn -B -ntp test`).
+
+**Frontend (Vitest + RTL)**
+
+Vitest tests were written before the component code in this iteration.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T17:55Z | `OperationPicker` — 4 operations, Swiss German labels | RED→GREEN | 4 tests |
+| 2026-04-27T17:55Z | `TrainingPage` — sign-in gate when no childId | GREEN | `Bitte zuerst anmelden` |
+| 2026-04-27T17:55Z | `TrainingPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T17:55Z | `TrainingPage` — pick op → first task displayed | GREEN | mocked `startTrainingSession` + `nextTrainingTask` |
+| 2026-04-27T17:55Z | `TrainingPage` — correct answer feedback | GREEN | `Super, das ist richtig` |
+| 2026-04-27T17:55Z | `TrainingPage` — wrong answer keeps stars (BR-002) + mode suggestion (BR-003) | GREEN | star balance unchanged at 12; suggestion text rendered |
+| 2026-04-27T17:55Z | `TrainingPage` — session summary shows correct/total | GREEN | `Gut gemacht!` + `Richtig: 1 von 1` |
+
+Suite: `Tests: 83 passed (83)` — `pnpm --filter numnia-frontend test`
+Coverage: 88.47% lines / 88.88% branch (≥70% line threshold ✅)
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T17:57Z | `e2e/features/UC-003.feature` — 4 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T17:57Z | `e2e/steps/uc-003-steps.ts` — backend-driven step bindings | BOUND | `--dry-run` passed: `11 scenarios (11 skipped)` |
+| 2026-04-27T17:57Z | E2E suite dry-run | PASS | zero undefined steps |
+
+Side fix: `e2e/support/world.ts` imports of `Browser/BrowserContext/Page` and
+`IWorldOptions` updated to `import type` syntax (required by current
+`@cucumber/cucumber@12.8.2` and `@playwright/test@1.59.x` ESM exports).
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-003 + FR-LEARN-001..012 / FR-GAME-001/005/006 / FR-CRE-004 / NFR-PERF-002 / NFR-A11Y-001 / NFR-I18N-002/004 |
+| Engineering quality | 🟢 | 189 backend tests + 83 frontend tests green; coverage well above thresholds; Test First evident in module-creation iteration; all UC-003 BR have paired failure/success unit coverage |
+| Security & privacy | 🟡 | No personal data in logs; child identification by UUID only. `X-Child-Id` placeholder header until UC-009 wires Spring Security for parent vs child sessions on training endpoints. |
+| Pedagogy | 🟢 | BR-001 (1M ceiling), BR-002 (no penalty), BR-003 (3-error frustration protection + mode suggestion), BR-004 (next-day mastery) all enforced server-side and config-friendly via injectable thresholds in `TrainingService` |
+| Language | 🟢 | English identifiers; UI in Swiss High German with umlauts, no sharp s (asserted in tests) |
+| Operations | 🟡 | Mastery thresholds and pool config still as constants (will move to `application.yaml` with UC-008) |
+
+Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-003 GREEN):
+
+- Replace in-memory learning repositories with Postgres + Flyway (UC-008).
+- Wire HTTP-level child-session enforcement on `/api/training/**` once Spring Security is available (UC-009).
+- Externalize `MASTERY_TASK_THRESHOLD`, `MASTERY_ACCURACY_THRESHOLD`, default S/G to YAML.
+- Add backend `/api/test/star-points` helper to make the "12 star points" E2E scenario fully runnable end-to-end (currently dry-run only).
