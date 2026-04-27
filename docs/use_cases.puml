@@ -8,45 +8,178 @@ skinparam usecase {
   ArrowColor      #1F2937
 }
 
-title Numnia - Use Cases (Release 1)
+title Numnia - Use Cases (Releases 1-5 + Legal)
 
-actor "Child"             as Child
-actor "Parent"            as Parent
-actor "Email Service"     as Mail <<system>>
+' ===== Actors =====
+actor "Visitor"            as Visitor
+actor "Child"              as Child
+actor "Parent"             as Parent
+actor "Teacher"            as Teacher
+actor "School Admin"       as SchoolAdmin
+actor "Content Manager"    as ContentMgr
+actor "Support / Moderator" as Support
+actor "System Admin / Operator" as Operator
+actor "Adaptive Engine"    as Adaptive <<system>>
+actor "Matchmaking"        as Matchmaking <<system>>
+actor "Moderation Service" as ModSvc <<system>>
+actor "Email Service"      as Mail <<system>>
+actor "Data Protection Officer" as DPO
 
-rectangle "Numnia Platform" {
-  usecase "UC-001 Set up parent account\nand child profile (double opt-in)"        as UC001
-  usecase "UC-002 Child signs in\nto child profile"                                 as UC002
-  usecase "UC-003 Child starts\ntraining mode"                                      as UC003
-  usecase "UC-004 Child practices in\naccuracy mode"                                as UC004
-  usecase "UC-005 Child enters a world\nthrough a portal"                           as UC005
-  usecase "UC-006 Child unlocks creature\nand picks companion"                      as UC006
-  usecase "UC-007 Child customizes avatar\nand uses avatar shop"                    as UC007
-  usecase "UC-008 Child views own\nlearning progress"                               as UC008
-  usecase "UC-009 Parent sets daily limit\nand risk mechanic"                       as UC009
-  usecase "UC-010 Parent exports\nchild data"                                       as UC010
-  usecase "UC-011 Parent deletes\nchild account"                                    as UC011
+' ===== Release 1 (MVP) =====
+rectangle "Release 1 - safe MVP" {
+  usecase "UC-001 Set up parent account\nand child profile (double opt-in)" as UC001
+  usecase "UC-002 Child signs in\nto child profile"                          as UC002
+  usecase "UC-003 Child starts\ntraining mode"                               as UC003
+  usecase "UC-004 Child practices in\naccuracy mode"                         as UC004
+  usecase "UC-005 Child enters a world\nthrough a portal"                    as UC005
+  usecase "UC-006 Child unlocks creature\nand picks companion"               as UC006
+  usecase "UC-007 Child customizes avatar\nand uses avatar shop"             as UC007
+  usecase "UC-008 Child views own\nlearning progress"                        as UC008
+  usecase "UC-009 Parent sets daily limit\nand risk mechanic"                as UC009
+  usecase "UC-010 Parent exports\nchild data"                                as UC010
+  usecase "UC-011 Parent deletes\nchild account"                             as UC011
+  usecase "UC-012 Child uses\naccessibility mode"                            as UC012
+  usecase "UC-013 Child receives\nexplanation mode"                          as UC013
+  usecase "UC-014 Child plays\nsprint mode"                                  as UC014
+  usecase "UC-015 Child plays\nlevel mode"                                   as UC015
+  usecase "UC-016 Child achieves daily\nand weekly goals"                    as UC016
+  usecase "UC-017 Spaced repetition\nretest probe"                           as UC017
+  usecase "UC-018 Parent unlocks multiplayer\nvia second consent"            as UC018
+  usecase "UC-019 Child views\ncreature gallery"                             as UC019
+  usecase "UC-020 Child picks\nfantasy display name"                         as UC020
 }
 
-' Actor relations
+' ===== Release 2 (multiplayer & events) =====
+rectangle "Release 2 - multiplayer & events" {
+  usecase "UC-021 1v1 synchronous duel"                  as UC021
+  usecase "UC-022 Asynchronous duel"                     as UC022
+  usecase "UC-023 Matchmaking with\nbot fallback"        as UC023
+  usecase "UC-024 Safe signal\ncommunication"            as UC024
+  usecase "UC-025 Class / friend-circle\nleaderboard"    as UC025
+  usecase "UC-026 Configure simple\nevent"               as UC026
+  usecase "UC-027 Child enters\nevent portal"            as UC027
+  usecase "UC-028 Moderation auto-hide\nsuspected case"  as UC028
+}
+
+' ===== Release 3 (school) =====
+rectangle "Release 3 - school mode" {
+  usecase "UC-029 School admin\ninvites teacher"             as UC029
+  usecase "UC-030 Teacher creates class\nvia QR / code"      as UC030
+  usecase "UC-031 Teacher releases or\nblocks content"       as UC031
+  usecase "UC-032 Teacher configures\nclass challenge"       as UC032
+  usecase "UC-033 Child completes\nhomework"                 as UC033
+  usecase "UC-034 Teacher exports\nclass report"             as UC034
+  usecase "UC-035 Teaching mode overrides\nparental limits"  as UC035
+  usecase "UC-036 2v2 team challenge"                        as UC036
+  usecase "UC-037 Operator handles\nmoderation case"         as UC037
+}
+
+' ===== Release 4 (LiveOps & content) =====
+rectangle "Release 4 - LiveOps & content expansion" {
+  usecase "UC-038 Configure task pool"                    as UC038
+  usecase "UC-039 Configure season"                       as UC039
+  usecase "UC-040 Boss portal"                            as UC040
+  usecase "UC-041 Child collects\nseason rewards"         as UC041
+  usecase "UC-042 Release new world\n(friendly design)"   as UC042
+  usecase "UC-043 Operator monitors\nsystem health"       as UC043
+  usecase "UC-044 Adaptive engine\npace downgrade"        as UC044
+}
+
+' ===== Release 5 (full build-out) =====
+rectangle "Release 5 - full target build-out" {
+  usecase "UC-045 Browse full\n24-world catalog"        as UC045
+  usecase "UC-046 Full creature\nevolution gallery"     as UC046
+  usecase "UC-047 Toolchain and\noperations review"     as UC047
+  usecase "UC-048 Backup and\nrestore drill"            as UC048
+}
+
+' ===== Legal / cross-cutting =====
+rectangle "Legal & cross-cutting (R1, DE/EN)" {
+  usecase "UC-049 Imprint"                              as UC049
+  usecase "UC-050 Privacy Policy"                       as UC050
+  usecase "UC-051 Terms of Use"                         as UC051
+  usecase "UC-052 Cookie Notice & consent"              as UC052
+  usecase "UC-053 Accessibility Statement"              as UC053
+  usecase "UC-054 Data subject request\n(FADP / GDPR)"  as UC054
+}
+
+' ===== Actor relations =====
 Parent --> UC001
 Parent --> UC009
 Parent --> UC010
 Parent --> UC011
-Child  --> UC002
-Child  --> UC003
-Child  --> UC004
-Child  --> UC005
-Child  --> UC006
-Child  --> UC007
-Child  --> UC008
+Parent --> UC018
+Parent --> UC054
 
-' Outbound to external systems
-UC001 --> Mail : sends confirmation email
-UC010 --> Mail : sends export-ready email
-UC011 --> Mail : sends deletion confirmation
+Child --> UC002
+Child --> UC003
+Child --> UC004
+Child --> UC005
+Child --> UC006
+Child --> UC007
+Child --> UC008
+Child --> UC012
+Child --> UC013
+Child --> UC014
+Child --> UC015
+Child --> UC016
+Child --> UC019
+Child --> UC020
+Child --> UC021
+Child --> UC022
+Child --> UC024
+Child --> UC025
+Child --> UC027
+Child --> UC033
+Child --> UC036
+Child --> UC040
+Child --> UC041
+Child --> UC045
+Child --> UC046
 
-' Includes / extends
+Teacher --> UC030
+Teacher --> UC031
+Teacher --> UC032
+Teacher --> UC034
+Teacher --> UC035
+
+SchoolAdmin --> UC029
+
+ContentMgr --> UC026
+ContentMgr --> UC038
+ContentMgr --> UC039
+ContentMgr --> UC042
+
+Support --> UC037
+
+Operator --> UC043
+Operator --> UC047
+Operator --> UC048
+
+Adaptive --> UC017
+Adaptive --> UC044
+
+Matchmaking --> UC023
+
+ModSvc --> UC028
+
+DPO --> UC054
+
+Visitor --> UC049
+Visitor --> UC050
+Visitor --> UC051
+Visitor --> UC052
+Visitor --> UC053
+
+' ===== Outbound to external systems =====
+UC001 --> Mail : confirmation email
+UC010 --> Mail : export-ready email
+UC011 --> Mail : deletion confirmation
+UC018 --> Mail : second-consent email
+UC029 --> Mail : invitation email
+UC054 --> Mail : DSAR confirmation
+
+' ===== Includes / extends =====
 UC003 ..> UC002 : <<include>>
 UC004 ..> UC002 : <<include>>
 UC005 ..> UC002 : <<include>>
@@ -56,5 +189,40 @@ UC008 ..> UC002 : <<include>>
 UC009 ..> UC001 : <<include>>
 UC010 ..> UC001 : <<include>>
 UC011 ..> UC001 : <<include>>
+UC018 ..> UC001 : <<include>>
+
+UC013 ..> UC044 : <<extend>>
+UC014 ..> UC002 : <<include>>
+UC015 ..> UC002 : <<include>>
+UC016 ..> UC002 : <<include>>
+UC017 ..> UC015 : <<extend>>
+UC019 ..> UC002 : <<include>>
+UC020 ..> UC001 : <<include>>
+
+UC021 ..> UC018 : <<include>>
+UC021 ..> UC023 : <<include>>
+UC022 ..> UC018 : <<include>>
+UC024 ..> UC021 : <<extend>>
+UC025 ..> UC002 : <<include>>
+UC027 ..> UC026 : <<include>>
+UC028 ..> UC037 : <<extend>>
+
+UC030 ..> UC029 : <<include>>
+UC031 ..> UC030 : <<include>>
+UC032 ..> UC030 : <<include>>
+UC033 ..> UC031 : <<include>>
+UC034 ..> UC030 : <<include>>
+UC035 ..> UC030 : <<include>>
+UC036 ..> UC023 : <<include>>
+
+UC040 ..> UC005 : <<extend>>
+UC041 ..> UC039 : <<include>>
+UC027 ..> UC005 : <<extend>>
+
+UC045 ..> UC042 : <<include>>
+UC046 ..> UC019 : <<extend>>
+
+UC054 ..> UC010 : <<extend>>
+UC054 ..> UC011 : <<extend>>
 
 @enduml
