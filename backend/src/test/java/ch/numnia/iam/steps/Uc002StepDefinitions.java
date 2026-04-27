@@ -194,6 +194,15 @@ public class Uc002StepDefinitions {
 
     @Given("an active child session")
     public void anActiveChildSession() throws Exception {
+        if (childId == null) {
+            // Bootstrap a fresh parent + child + PIN for scenarios that start cold
+            var setup = post("/api/test/child-setup", null);
+            assertThat(setup.statusCode()).as("child-setup should succeed").isEqualTo(200);
+            var setupBody = parseBody(setup);
+            parentId = UUID.fromString((String) setupBody.get("parentId"));
+            childId = UUID.fromString((String) setupBody.get("childId"));
+            pin = (String) setupBody.get("pin");
+        }
         // Create a fresh child session via the E2E test helper
         var resp = post("/api/test/child-session?childId=" + childId, null);
         assertThat(resp.statusCode()).as("creating child session should succeed").isEqualTo(200);

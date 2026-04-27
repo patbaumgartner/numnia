@@ -60,3 +60,45 @@ export interface SignInChildResponse {
   role: string;
   expiresAt: string;
 }
+
+// ── UC-003: Training mode ────────────────────────────────────────────────────
+
+export type Operation = 'ADDITION' | 'SUBTRACTION' | 'MULTIPLICATION' | 'DIVISION';
+export type AnswerOutcome = 'CORRECT' | 'WRONG' | 'TIMEOUT';
+export type ModeSuggestion = 'NONE' | 'ACCURACY' | 'EXPLANATION';
+
+export interface StartTrainingSessionRequest {
+  operation: Operation;
+  worldId?: string;
+}
+
+export interface StartTrainingSessionResponse {
+  sessionId: string;
+  operation: Operation;
+  difficulty: number;
+  speed: number;
+}
+
+export interface TrainingTaskResponse {
+  taskId: string;
+  operation: Operation;
+  operandA: number;
+  operandB: number;
+  difficulty: number;
+  speed: number;
+}
+
+export interface AnswerResultResponse {
+  outcome: AnswerOutcome;
+  currentSpeed: number;
+  modeSuggestion: ModeSuggestion;
+  starPointsBalance: number;
+}
+
+export interface SessionSummaryResponse {
+  sessionId: string;
+  totalTasks: number;
+  correctTasks: number;
+  starPointsBalance: number;
+  masteryStatus: 'NOT_STARTED' | 'IN_CONSOLIDATION' | 'MASTERED';
+}
