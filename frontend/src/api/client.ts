@@ -34,6 +34,8 @@ import type {
   ShopItemsResponse,
   InventoryResponse,
   PurchaseResultResponse,
+  ProgressOverviewResponse,
+  ColorPalette,
 } from './types';
 
 const API_BASE = '/api';
@@ -349,4 +351,24 @@ export async function getInventory(childId: string): Promise<InventoryResponse> 
   return request<InventoryResponse>('GET', '/avatar/inventory', undefined, {
     'X-Child-Id': childId,
   });
+}
+
+/** UC-008: get the child's own learning progress overview. */
+export async function getProgress(childId: string): Promise<ProgressOverviewResponse> {
+  return request<ProgressOverviewResponse>('GET', '/progress', undefined, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** UC-008 alt-flow 3a: switch the color palette (e.g. for color-blind profile). */
+export async function setProgressPalette(
+  childId: string,
+  palette: ColorPalette,
+): Promise<{ palette: ColorPalette }> {
+  return request<{ palette: ColorPalette }>(
+    'PUT',
+    '/progress/preferences/palette',
+    { palette },
+    { 'X-Child-Id': childId },
+  );
 }

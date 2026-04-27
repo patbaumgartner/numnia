@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/creatures", "/api/creatures/**").permitAll()
                 .requestMatchers("/api/avatar", "/api/avatar/**").permitAll()
                 .requestMatchers("/api/shop", "/api/shop/**").permitAll()
+                .requestMatchers("/api/progress", "/api/progress/**").permitAll()
                 // Actuator health endpoint
                 .requestMatchers("/actuator/health").permitAll()
                 // All other requests require authentication (expanded in UC-009)

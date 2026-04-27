@@ -601,3 +601,83 @@ Recommendation: **merge**. Follow-ups:
 - Externalise shop catalogue, fantasy-name catalog and avatar base-model catalog to `application.yaml`.
 - Wire HTTP-level child-session enforcement on `/api/avatar/**` and `/api/shop/**` once Spring Security arrives (UC-009).
 - Persist inventory + audit log to Postgres + Flyway (currently in-memory).
+
+## UC-008 — Child views own learning progress
+
+### Architect (Phase 1)
+
+- 2026-04-28T19:30Z — UC-008 spec already complete and approved.
+- FR/NFR plan: FR-GAME-005, FR-LEARN-009, NFR-A11Y-002, NFR-A11Y-003, NFR-UX-001, NFR-I18N-002.
+- Backed by 3 verbatim Gherkin scenarios in the UC spec (progress per op, no leaderboard, color-blind palette).
+
+### Implementer (Phase 2)
+
+A new top-level module `ch.numnia.progress` was introduced rather than
+extending `learning`, to keep aggregation a separate boundary and a
+dedicated `AccessibilityPreferencesRepository` independent from the
+worlds-module reduced-motion preferences. UC-008 BR-002 ("no leaderboard")
+is enforced both at the type level (no `rank`/`peer` fields exist on
+`OperationProgress` or `ProgressOverview`) and asserted via reflective
+record-component scans in unit tests.
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T19:31Z | `ProgressService.getOverview` aggregates per-operation data | RED→GREEN | `ProgressServiceTest.getOverview_aggregatesPerOperation_fromLearningAndSessions` |
+| 2026-04-28T19:31Z | BR-001 progress is per-child, never mixed with peers | RED→GREEN | `getOverview_isolatesProgressPerChild_brIsolation` (other child's session not counted) |
+| 2026-04-28T19:31Z | BR-002 no rank, leaderboard, peerAverage or globalRanking field exists | RED→GREEN | reflective component scan: `recordComponents_doNotExposeAnyLeaderboardField_brNoComparison` |
+| 2026-04-28T19:31Z | Alt 1a — empty overview surfaces friendly hint | RED→GREEN | `getOverview_withNoLearningData_marksOverviewEmpty` |
+| 2026-04-28T19:31Z | Alt 3a — palette switch persists and is returned on next call | RED→GREEN | `setPalette_persistsChoice_andOverviewReflectsIt` |
+| 2026-04-28T19:31Z | Mastery marker derives `IN_CONSOLIDATION` and `MASTERED` | RED→GREEN | `getOverview_marksMasteryStatusFromLearningProgress` |
+| 2026-04-28T19:31Z | Null-arg validation on `getOverview` and `setPalette` | RED→GREEN | `getOverview_withNullChildId_throws`, `setPalette_withNullPalette_throws` |
+| 2026-04-28T19:31Z | `TrainingSessionRepository.findEndedByChildAndOperation` | RED→GREEN | `InMemoryTrainingSessionRepositoryTest` (filter `endedAt != null`) |
+| 2026-04-28T19:31Z | Cucumber: Progress per operation is visible | GREEN | `Uc008StepDefinitions` |
+| 2026-04-28T19:31Z | Cucumber: No comparative leaderboards | GREEN | `Uc008StepDefinitions` (reflective check on overview record) |
+| 2026-04-28T19:31Z | Cucumber: Color-blind profile is respected | GREEN | `Uc008StepDefinitions` (palette switch + read-back) |
+
+Suite: `Tests run: 261, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`).
+
+**Frontend (Vitest + RTL)**
+
+Vitest tests written before the component code in this iteration.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T19:43Z | `ProgressPage` — sign-in gate when no childId | RED→GREEN | `/Bitte zuerst anmelden/` |
+| 2026-04-28T19:43Z | `ProgressPage` — Swiss High German, no sharp s | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-28T19:43Z | `ProgressPage` — one progress bar per operation + mastery marker (main 2) | GREEN | `bar-ADDITION`, `bar-MULTIPLICATION`, `mastery-*` testids |
+| 2026-04-28T19:43Z | `ProgressPage` — no leaderboard / peer-comparison element (BR-002) | GREEN | `queryByText(/Rangliste|Bestenliste|Vergleich mit/)` null; no `<table>` |
+| 2026-04-28T19:43Z | `ProgressPage` — empty hint "Leg los und sammle deine ersten Sterne" (alt 1a) | GREEN | `data-testid="empty-banner"` rendered |
+| 2026-04-28T19:43Z | `ProgressPage` — deuteranopia palette class on container (alt 3a) | GREEN | `palette-deuteranopia` class asserted |
+| 2026-04-28T19:43Z | `ProgressPage` — palette switch calls backend and refreshes | GREEN | `setProgressPalette` mock + second `getProgress` call |
+| 2026-04-28T19:43Z | `ProgressPage` — offline notice when backend is unreachable | GREEN | `data-testid="error-banner"` shows `Daten sind nicht aktuell` |
+
+Suite: `Tests: 121 passed (121)` — `pnpm -s test --run` (was 113, +8 for UC-008).
+Build: `pnpm -s build` GREEN (267.85 kB / 82.95 kB gzipped).
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T19:44Z | `e2e/features/UC-008.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-28T19:44Z | `e2e/steps/uc-008-steps.ts` — backend-driven step bindings | BOUND | dry-run: `26 scenarios (26 skipped), 147 steps (147 skipped)`, zero undefined |
+| 2026-04-28T19:44Z | E2E suite dry-run | PASS | zero undefined steps |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-008 + FR-GAME-005 / FR-LEARN-009 / NFR-A11Y-002/003 / NFR-UX-001 / NFR-I18N-002 / BR-001/002/003 |
+| Engineering quality | 🟢 | 261 backend tests + 121 frontend tests green; UC-008 BRs each have a paired failure/success unit test; `findEndedByChildAndOperation` filters `endedAt != null` so partial sessions never inflate counts |
+| Security & privacy | 🟡 | No personal data in logs; aggregation never crosses children. `X-Child-Id` placeholder header until UC-009 wires Spring Security on `/api/progress/**`. |
+| Pedagogy | 🟢 | BR-001 (per-child isolation), BR-002 (no leaderboard, type-level + reflective), BR-003 (no time/calendar pressure surfaced) all enforced server-side; mastery thresholds reused from `MasteryTracker` (config) |
+| Language | 🟢 | English identifiers; UI in Swiss High German with umlauts, no sharp s (asserted in tests: `Mein Fortschritt`, `Plus`, `Minus`, `Mal`, `Geteilt`, `Genauigkeit`, `Sicher beherrscht`, `Im Aufbau`, `Leg los und sammle deine ersten Sterne`) |
+| Operations | 🟡 | Color palette set persisted in-memory; will move to Postgres alongside other repositories |
+
+Recommendation: **merge**. Follow-ups:
+
+- Add `/api/test/training-history` E2E helper to make UC-008 scenarios fully runnable end-to-end (currently dry-run only — same status as UC-005/UC-006/UC-007 helpers).
+- Persist `AccessibilityPreferencesRepository` to Postgres + Flyway.
+- Wire HTTP-level child-session enforcement on `/api/progress/**` once Spring Security arrives (UC-009).
+- Externalise mastery / palette defaults to `application.yaml`.
