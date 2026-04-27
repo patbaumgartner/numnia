@@ -37,7 +37,52 @@ strict per-behavior Red→Green order.
 
 Suite: `Tests run: 18, Failures: 0, Errors: 0, Skipped: 0` (`mvn -B -ntp test`).
 
-### Reviewer (Phase 3) — summary
+### Implementer (Phase 2) — Full-stack iteration (UC-001 REOPENED)
+
+Reopened after stack-bootstrap audit. Backend was already green. This
+iteration delivers the missing frontend and E2E slices following the same
+TDD Red→Green discipline.
+
+**Backend (GREEN, confirmed)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27 (prev.) | All 4 Cucumber scenarios + 31 unit tests | GREEN | `Tests run: 35, Failures: 0` |
+| 2026-04-27 (prev.) | JaCoCo coverage | PASS | 84% line / 77% branch (≥80%/≥70%) |
+
+**Frontend (Vitest + RTL)**
+
+Vitest tests were written before the component code in this iteration.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28 | `RegistrationForm` — required-field validation | RED→GREEN | `RegistrationForm.test.tsx` 10 tests |
+| 2026-04-28 | `RegistrationForm` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-28 | `RegistrationForm` — duplicate-email 409 shows Swiss German message | GREEN | mocked `ApiError(409)` → `/bereits registriert/` |
+| 2026-04-28 | `ChildProfileForm` — fantasy name dropdown contains exactly 26 vetted names | GREEN | `FANTASY_NAMES.length === 26`, options count 27 (with placeholder) |
+| 2026-04-28 | `ChildProfileForm` — avatar dropdown contains exactly 8 vetted models | GREEN | `AVATAR_MODELS.length === 8`, options count 9 |
+| 2026-04-28 | `ChildProfileForm` — yearOfBirth boundary 7 accepted | GREEN | `CURRENT_YEAR - 7` → no validation error |
+| 2026-04-28 | `ChildProfileForm` — yearOfBirth boundary 12 accepted | GREEN | `CURRENT_YEAR - 12` → no validation error |
+| 2026-04-28 | `ChildProfileForm` — yearOfBirth 6 rejected | GREEN | `/Kinder im Alter von 7 bis 12/i` shown |
+| 2026-04-28 | `ChildProfileForm` — yearOfBirth 13 rejected | GREEN | `/Kinder im Alter von 7 bis 12/i` shown |
+| 2026-04-28 | API client — all 5 functions tested with mocked fetch | GREEN | `client.test.ts` 10 tests |
+| 2026-04-28 | Pages — smoke tests for all 7 page components | GREEN | `pages.test.tsx` 19 tests |
+| 2026-04-28 | App routing setup with React Router 7 | GREEN | `App.test.tsx` 2 tests |
+
+Suite: `Tests: 54 passed (54)` — `pnpm --filter numnia-frontend test:coverage`
+Coverage: **96.68% lines / 97.5% branch** (≥70% line threshold ✅)
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-28 | `e2e/features/UC-001.feature` — 4 scenarios, 29 steps | AUTHORED | verbatim Gherkin from UC spec |
+| 2026-04-28 | `e2e/steps/uc-001-steps.ts` — all step definitions | BOUND | `--dry-run` passed: `4 scenarios (4 skipped), 29 steps (29 skipped)` |
+| 2026-04-28 | E2E dry-run (no servers needed) | PASS | zero undefined steps |
+
+Note: Full E2E pass requires both backend (`mvn spring-boot:run -Dspring-boot.run.profiles=e2e`) and frontend (`pnpm dev`) running; `BeforeAll` health-check hook waits up to 30 s.
+
+
 
 | Category | Status | Note |
 |---|---|---|

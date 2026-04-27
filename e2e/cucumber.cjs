@@ -1,15 +1,14 @@
 // cucumber.cjs — Cucumber-JS configuration for Numnia E2E BDD tests.
-// Run via: npx cucumber-js (or `pnpm test` inside e2e/).
+// Run via: pnpm test (inside e2e/).
 // Feature files live in features/; TypeScript step definitions in steps/.
-// Steps are loaded via tsx for zero-transpile TypeScript execution.
+// tsx loaded via NODE_OPTIONS in package.json scripts.
 
 /** @type {import('@cucumber/cucumber').IConfiguration} */
 module.exports = {
   default: {
     paths: ['features/**/*.feature'],
     require: [],
-    import: ['steps/**/*.ts'],
-    loader: ['tsx'],
+    import: ['support/**/*.ts', 'hooks/**/*.ts', 'steps/**/*.ts'],
     format: ['progress-bar', 'html:cucumber-report.html'],
     formatOptions: { snippetInterface: 'async-await' },
     publishQuiet: true,

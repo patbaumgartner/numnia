@@ -202,7 +202,73 @@ flowchart TB
 | Safety & Moderation | Communication filter, auto-hide, audit | FR-SAFE-001..005 |
 | Reporting & Analytics | Learning state, operational monitoring | FR-GAME-005, FR-OPS-004 |
 
-### 5.2 Level 2 - Learning & Mastery Whitebox
+### 5.2 Level 2 - Identity & Consent (IAM) Whitebox
+
+> **UC-001 implementation delivered.** The `ch.numnia.iam` Spring Modulith
+> module was introduced in the UC-001 iteration.
+
+```mermaid
+flowchart LR
+    subgraph API["ch.numnia.iam.api"]
+        PC[ParentController]
+        EH[IamExceptionHandler]
+        TTC["TestTokenController\n(e2e profile only)"]
+    end
+    subgraph Service["ch.numnia.iam.service"]
+        PRS[ParentRegistrationService]
+        CPS[ChildProfileService]
+    end
+    subgraph Domain["ch.numnia.iam.domain"]
+        PA[ParentAccount]
+        CP[ChildProfile]
+        VT[VerificationToken]
+        AL[AuditLogEntry]
+    end
+    subgraph SPI["ch.numnia.iam.spi"]
+        PAR[ParentAccountRepository]
+        CPR[ChildProfileRepository]
+        VTR[VerificationTokenRepository]
+        ALR[AuditLogRepository]
+    end
+    subgraph Config["ch.numnia.iam.config"]
+        IamCfg[IamConfig\n(BCrypt, catalogs)]
+        SecCfg[SecurityConfig]
+    end
+
+    PC --> PRS
+    PC --> CPS
+    PRS --> PAR
+    PRS --> VTR
+    PRS --> ALR
+    CPS --> CPR
+    CPS --> VTR
+    CPS --> ALR
+    PAR --> PA
+    CPR --> CP
+    VTR --> VT
+    ALR --> AL
+    IamCfg --> PRS
+    IamCfg --> CPS
+```
+
+**Key design decisions:**
+- `VerificationToken` primary key = UUID token value itself (random, single-use, 24 h TTL).
+- `AuditLogEntry.parentRef` = UUID (never email); `childRef` = pseudonym only — NFR-PRIV-001.
+- Fantasy-name catalog (26 names) and avatar catalog (8 gender-neutral models) are injected as `Set<String>` beans from `IamConfig` — separating business rules from service code.
+- `TestTokenController` is gated by `@ConditionalOnProperty("numnia.e2e.enabled")` — never active in production.
+- All `/api/**` endpoints are permitted without authentication in UC-001; Spring Security session is `STATELESS`. Authentication deferred to UC-009.
+
+**REST surface (UC-001):**
+
+| Method | Path | Status | Description |
+| --- | --- | --- | --- |
+| POST | `/api/parents` | 201 / 409 | Register parent |
+| POST | `/api/parents/verify` | 200 / 410 | Primary email verification |
+| POST | `/api/parents/{id}/child-profiles` | 201 / 422 | Create child profile |
+| POST | `/api/parents/{id}/child-profiles/{cid}/confirm` | 200 / 410 | Secondary consent |
+| GET | `/api/test/verification-tokens` | 200 | E2E helper (e2e profile only) |
+
+### 5.3 Level 2 - Learning & Mastery Whitebox
 
 ```mermaid
 flowchart LR
@@ -227,7 +293,7 @@ flowchart LR
 - The mastery tracker maintains accuracy, median answer time, and calendar-day consolidation (FR-LEARN-009, FR-LEARN-012, SRS 6.1.1).
 - The spacing scheduler implements re-test intervals of 3/5/7/10/14 days (SRS 6.1.2).
 
-### 5.3 Level 2 - Multiplayer & Matchmaking Whitebox
+### 5.4 Level 2 - Multiplayer & Matchmaking Whitebox
 
 ```mermaid
 flowchart LR

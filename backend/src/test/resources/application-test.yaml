@@ -1,0 +1,29 @@
+# Test profile — uses H2 in-memory database so the backend Cucumber and unit
+# integration tests can run without a live PostgreSQL instance.
+# Flyway is disabled; JPA creates the schema from entity definitions.
+#
+# Note (UC-001 scope): In-memory H2 is acceptable for UC-001.
+# Postgres + Flyway migration to be added when UC-009/UC-011 (persistent
+# session management) is implemented — see follow-up items in
+# .ralph/usecase-progress.md.
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:numnia_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=value
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  flyway:
+    enabled: false
+
+# Enable the e2e test-helper endpoint so Cucumber scenarios can retrieve
+# verification tokens from the in-memory store.
+# This flag is NEVER true in the production profile (application.yaml).
+numnia:
+  e2e:
+    enabled: true
