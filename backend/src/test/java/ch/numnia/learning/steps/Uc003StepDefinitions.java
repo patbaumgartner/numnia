@@ -29,6 +29,7 @@ public class Uc003StepDefinitions {
     @Autowired private InMemoryTaskPoolRepository taskPools;
     @Autowired private MasteryTracker masteryTracker;
     @Autowired private TaskGenerator taskGenerator;
+    @Autowired private ch.numnia.test.TestScenarioContext scenarioContext;
 
     private UUID childId;
     private TrainingSession session;
@@ -46,6 +47,7 @@ public class Uc003StepDefinitions {
         progress = null;
         firstSessionThresholdsMet = false;
         taskPools.reseedDefault();
+        scenarioContext.reset();
     }
 
     // ── Background ─────────────────────────────────────────────────────────
@@ -147,9 +149,13 @@ public class Uc003StepDefinitions {
 
     // ── Scenario: error costs no star points ──────────────────────────────
 
-    @Given("the child has 12 star points")
-    public void childHas12StarPoints() {
-        starPointsRepo.setBalance(childId, 12);
+    @Given("the child has {int} star points")
+    public void childHas12StarPoints(int amount) {
+        UUID activeChildId = scenarioContext.childId();
+        if (activeChildId != null) {
+            this.childId = activeChildId;
+        }
+        starPointsRepo.setBalance(childId, amount);
         progressRepo.save(new LearningProgress(childId, Operation.ADDITION, 2, 2));
         session = trainingService.startSession(childId, Operation.ADDITION,
                 InMemoryTaskPoolRepository.DEFAULT_WORLD);

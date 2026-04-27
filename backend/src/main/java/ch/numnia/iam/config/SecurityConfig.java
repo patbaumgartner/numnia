@@ -44,6 +44,9 @@ public class SecurityConfig {
                 // Spring Security in UC-009 (matches /api/training).
                 .requestMatchers("/api/worlds", "/api/worlds/**").permitAll()
                 .requestMatchers("/api/training", "/api/training/**").permitAll()
+                .requestMatchers("/api/creatures", "/api/creatures/**").permitAll()
+                .requestMatchers("/api/avatar", "/api/avatar/**").permitAll()
+                .requestMatchers("/api/shop", "/api/shop/**").permitAll()
                 // Actuator health endpoint
                 .requestMatchers("/actuator/health").permitAll()
                 // All other requests require authentication (expanded in UC-009)

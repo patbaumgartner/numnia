@@ -124,6 +124,18 @@ public class ChildProfile {
     }
 
     /**
+     * Update the avatar base model (UC-007 step 2).
+     * The caller must validate that the base model belongs to the
+     * gender-neutral catalogue (BR-004).
+     */
+    public void setAvatarBaseModel(String avatarBaseModel) {
+        if (avatarBaseModel == null || avatarBaseModel.isBlank()) {
+            throw new IllegalArgumentException("avatarBaseModel must not be blank");
+        }
+        this.avatarBaseModel = avatarBaseModel;
+    }
+
+    /**
      * Stores the BCrypt hash of the PIN set by the parent (UC-002, NFR-SEC-003).
      * Resets the failed sign-in counter and lock state.
      *
