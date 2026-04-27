@@ -762,3 +762,85 @@ Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-009 GR
 - Wire `RiskMechanicService.recordWrongAnswer` into the active match flow (UC-005 portal/match) and `endMatch` into the match-end transition.
 - Add `/api/test/play-minutes` and `/api/test/risk-pool` E2E seed helpers so UC-009 scenarios can run end-to-end (currently dry-run only).
 - Reconsider UTC-day vs Switzerland-local-day for the daily limit boundary (consistency follow-up across `learning` and `parentcontrols`).
+
+## UC-010 — Parent exports child data as JSON / PDF
+
+### Architect (Phase 1)
+
+- 2026-04-28T19:50Z — UC-010 spec already complete and approved.
+- FR/NFR plan: FR-PAR-004, FR-SAFE-005, NFR-PRIV-002, NFR-SEC-001/003, BR-001/002/003/004.
+- 3 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+New module `ch.numnia.dataexport` (domain / spi / infra / service / api). Tests
+authored before production classes; failing-then-green confirmed by progressive
+`mvn test` runs against intermediate states (compile RED → unit RED → cucumber
+RED → GREEN). Initial Spring DI failure (33 cucumber errors due to ambiguous
+constructors in `ExportService`) was fixed by annotating the no-Clock ctor
+with `@Autowired`, matching the established `RiskMechanicService` pattern.
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T20:05Z | `ExportService.requestExport` produces JSON with all six sections (BR-001) | RED→GREEN | `ExportServiceTest.requestExport_jsonFormat_containsAllRequiredSections_br001` |
+| 2026-04-28T20:05Z | Foreign parent rejected (NFR-SEC-003) | RED→GREEN | `requestExport_byForeignParent_isRejected_nfrSec003` |
+| 2026-04-28T20:05Z | Signed token is opaque, ≥32 chars (BR-002) | RED→GREEN | `requestExport_producesOpaqueSignedToken_br002` |
+| 2026-04-28T20:05Z | Each request emits `EXPORT_TRIGGERED` audit (BR-003) | RED→GREEN | `requestExport_emitsExportTriggeredAudit_br003` |
+| 2026-04-28T20:05Z | Both-format request produces JSON + PDF | RED→GREEN | `requestExport_bothFormat_producesTwoFiles_oneJsonOnePdf` |
+| 2026-04-28T20:05Z | `download` after deadline rejected (BR-004) | RED→GREEN | `download_afterDeadline_isRejected_brExpired` |
+| 2026-04-28T20:05Z | First download writes `EXPORT_DOWNLOADED` audit | RED→GREEN | `download_firstTime_writesExportDownloadedAuditEntry` |
+| 2026-04-28T20:05Z | Unknown / null tokens rejected | RED→GREEN | `download_unknownToken_isRejected`, `download_nullToken_isRejected` |
+| 2026-04-28T20:05Z | `purgeExpired` removes only un-downloaded expired files (BR-004) | RED→GREEN | `purgeExpired_removesUnDownloadedExpiredFilesAndAudits_br004`, `purgeExpired_doesNotDeleteDownloadedFiles`, `purgeExpired_skipsFilesNotYetExpired` |
+| 2026-04-28T20:05Z | `listExports` is parent-scoped | RED→GREEN | `listExports_returnsOnlyOwningParents` |
+| 2026-04-28T20:08Z | Cucumber: Complete export in JSON format | GREEN | `Uc010StepDefinitions` |
+| 2026-04-28T20:08Z | Cucumber: Download link expires after deadline | GREEN | `Uc010StepDefinitions` |
+| 2026-04-28T20:08Z | Cucumber: Audit log documents trigger and download | GREEN | `Uc010StepDefinitions` |
+
+Suite: `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`).
+JaCoCo: `verify` GREEN (≥80% line / ≥70% branch).
+
+**Frontend (Vitest + RTL)**
+
+Tests authored before `ExportPage.tsx`.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T20:15Z | `ExportPage` — sign-in gate when no parentId | RED→GREEN | `Bitte zuerst als Elternteil anmelden` |
+| 2026-04-28T20:15Z | `ExportPage` — Swiss High German copy without sharp s | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-28T20:15Z | `ExportPage` — JSON export shows signed download link (BR-002) | GREEN | mocked `triggerExport` → `signedUrlPath` rendered |
+| 2026-04-28T20:15Z | `ExportPage` — 7-day deadline hint surfaced (BR-004) | GREEN | `Der Link bleibt 7 Tage lang gueltig` |
+| 2026-04-28T20:15Z | `ExportPage` — BOTH format renders two download links | GREEN | `findAllByRole('link')` length 2 |
+| 2026-04-28T20:15Z | `ExportPage` — error rendered on request failure | GREEN | `role="alert"` text |
+| 2026-04-28T20:15Z | `ExportPage` — audit-log mention (BR-003) | GREEN | `protokolliert` |
+
+Suite: `Tests: 136 passed (136)` — `pnpm -s test --run` (was 129, +7 for UC-010).
+Build: `pnpm -s build` GREEN.
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-28T20:18Z | `e2e/features/UC-010.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-28T20:18Z | `e2e/steps/uc-010-steps.ts` — backend-driven step bindings | BOUND | dry-run: `33 scenarios (33 skipped), 176 steps (176 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-010 + FR-PAR-004 / FR-SAFE-005 / NFR-PRIV-002 / NFR-SEC-001/003 / BR-001/002/003/004 |
+| Engineering quality | 🟢 | 303 backend tests + 136 frontend tests green; same-iteration test-first sequence; Spring DI fix matches established `@Autowired` pattern |
+| Security & privacy | 🟢 | Server-side ownership check (NFR-SEC-003); opaque signed token ≥32 chars (BR-002); audit on TRIGGERED / DOWNLOADED / EXPIRED / GENERATION_FAILED; child identification by pseudonym only in audit `childRef` (NFR-PRIV-001); `X-Parent-Id` placeholder header continues until Spring Security |
+| Pedagogy | n/a | UC-010 has no learning logic |
+| Language | 🟢 | English identifiers; UI Swiss High German with umlauts, no sharp s (asserted) |
+| Operations | 🟡 | In-memory `ExportFileRepository`; PDF rendering is a hand-rolled minimal PDF — replace with iText/PDFBox once content authoring (UC-007) lands |
+
+Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-010 GREEN):
+
+- Move `ExportFile` repository to Postgres + Flyway.
+- Replace minimal hand-rolled PDF renderer with PDFBox / iText (NFR-PRIV-002 readability).
+- Externalize 7-day deadline + token length to `application.yaml`.
+- Replace `X-Parent-Id` header placeholder with Spring Security parent-session resolution.
+- Add `/api/test/learning-history` and `/api/test/expire-export` E2E seed helpers so UC-010 scenarios can run end-to-end (currently dry-run only).
+- Schedule `purgeExpired` via `@Scheduled` once persistence lands (currently exposed as service method only).

@@ -24,5 +24,10 @@ public enum AuditAction {
     CHILD_LOCK_RELEASED,
     CHILD_SIGNED_OUT,
     // UC-002: cross-area authorization guard
-    PARENT_ENDPOINT_DENIED_FOR_CHILD
+    PARENT_ENDPOINT_DENIED_FOR_CHILD,
+    // UC-010: parent self-service data export
+    EXPORT_TRIGGERED,
+    EXPORT_DOWNLOADED,
+    EXPORT_FILE_EXPIRED,
+    EXPORT_GENERATION_FAILED
 }

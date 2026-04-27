@@ -247,3 +247,22 @@ export interface ChildControlsRequest {
   riskMechanicEnabled: boolean;
   confirmNoLimit: boolean;
 }
+
+// ── UC-010: parent data export (JSON / PDF) ──────────────────────────────
+
+export type ExportFormat = 'JSON' | 'PDF' | 'BOTH';
+
+export interface ExportSummaryResponse {
+  id: string;
+  childId: string;
+  format: ExportFormat;
+  token: string;
+  signedUrlPath: string;
+  createdAt: string;
+  expiresAt: string;
+  size: number;
+}
+
+export interface TriggerExportRequest {
+  format: ExportFormat;
+}
