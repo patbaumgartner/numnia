@@ -59,9 +59,6 @@ describe('RegistrationForm', () => {
   });
 
   it('does not contain the sharp s (ß) in any label or message', () => {
-    const { container } = screen.getByRole('form', {
-      name: 'Registrierungsformular',
-    }).closest('body') as Element;
     expect(document.body.textContent).not.toContain('ß');
   });
 
