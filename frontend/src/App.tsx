@@ -17,6 +17,7 @@ import ChildLockedPage from './pages/ChildLockedPage';
 import ChildShellPage from './pages/ChildShellPage';
 import ParentDashboardPage from './pages/ParentDashboardPage';
 import TrainingPage from './pages/TrainingPage';
+import AccuracyPage from './pages/AccuracyPage';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/parents/me" element={<ParentDashboardPage />} />
         {/* UC-003: Training mode */}
         <Route path="/training" element={<TrainingPage />} />
+        <Route path="/accuracy" element={<AccuracyPage />} />
       </Routes>
     </>
   );

@@ -23,6 +23,7 @@ import type {
   TrainingTaskResponse,
   AnswerResultResponse,
   SessionSummaryResponse,
+  ExplanationStepsResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -201,5 +202,30 @@ export async function endTrainingSession(
   return request<SessionSummaryResponse>(
     'POST',
     `/training/sessions/${sessionId}/end`,
+  );
+}
+
+// ── UC-004: Accuracy mode (G0, no time pressure) ─────────────────────────────
+
+/** Start a new accuracy-mode session (G0, no time pressure). */
+export async function startAccuracySession(
+  childId: string,
+  req: StartTrainingSessionRequest,
+): Promise<StartTrainingSessionResponse> {
+  return request<StartTrainingSessionResponse>(
+    'POST',
+    '/training/accuracy-sessions',
+    req,
+    { 'X-Child-Id': childId },
+  );
+}
+
+/** Fetch the animated solution steps for the current task of a session. */
+export async function getTrainingExplanation(
+  sessionId: string,
+): Promise<ExplanationStepsResponse> {
+  return request<ExplanationStepsResponse>(
+    'GET',
+    `/training/sessions/${sessionId}/explanation`,
   );
 }

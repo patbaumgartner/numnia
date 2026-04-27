@@ -303,3 +303,71 @@ Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-003 GR
 - Wire HTTP-level child-session enforcement on `/api/training/**` once Spring Security is available (UC-009).
 - Externalize `MASTERY_TASK_THRESHOLD`, `MASTERY_ACCURACY_THRESHOLD`, default S/G to YAML.
 - Add backend `/api/test/star-points` helper to make the "12 star points" E2E scenario fully runnable end-to-end (currently dry-run only).
+
+## UC-004 — Child practices in accuracy mode (without time pressure)
+
+### Architect (Phase 1)
+
+- 2026-04-27T18:25Z — UC-004 spec already complete and approved.
+- FR/NFR plan: FR-GAME-001/002, FR-LEARN-004/006/008, FR-GAM-005,
+  NFR-A11Y-001/003, NFR-I18N-002.
+- 3 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:26Z | Cucumber: Accuracy mode runs without a timer | RED | `Uc004StepDefinitions` referenced missing `startAccuracySession` / `task.timed()` / `accuracyMode` symbols → compile failure |
+| 2026-04-27T18:27Z | Cucumber: Accuracy mode runs without a timer | GREEN | task carries `timed=false`, speed forced to 0; `ACCURACY_SESSION_STARTED` audited |
+| 2026-04-27T18:27Z | Cucumber: Explanation mode is reachable from accuracy mode | RED→GREEN | `GET /sessions/{id}/explanation` returns 3 Swiss-High-German solution steps; same task remains answerable afterwards |
+| 2026-04-27T18:27Z | Cucumber: No star point loss on error | RED→GREEN | wrong answer in accuracy session keeps balance at 8 (BR-002) |
+| 2026-04-27T18:27Z | BR-001 G0 forbids any time limit | GREEN | `AdaptiveEngine.applyAfterAnswer` early-returns `NONE` when `session.accuracyMode()` (no speed downgrade, no mode suggestion) |
+| 2026-04-27T18:27Z | BR-002 errors cost no star points | GREEN | `TrainingServiceTest.accuracyMode_wrongAnswer_keepsStarBalance` |
+| 2026-04-27T18:27Z | TrainingService: starts accuracy session with `accuracyMode=true` | RED→GREEN | `startAccuracySession_emitsAccuracyAudit_andSetsSpeedZero` |
+| 2026-04-27T18:27Z | TrainingService: `getExplanation` produces ≥2 sharp-s-free steps | RED→GREEN | `getExplanation_returnsSwissGermanStepsWithoutSharpS_andEmitsAudit` |
+| 2026-04-27T18:27Z | MathTask: `timed()` helper distinguishes G0 from G1..3 | RED→GREEN | `MathTaskTest.timed_isFalseAtSpeedZero_trueAbove` |
+| 2026-04-27T18:27Z | TrainingSession: 7-arg ctor with `accuracyMode`, 6-arg legacy preserved | GREEN | construction with `accuracyMode=true` flagged session; legacy callers unchanged |
+
+Suite: `Tests run: 198, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B test`).
+
+**Frontend (Vitest + RTL)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:27Z | `AccuracyPage` — sign-in gate when no childId | RED→GREEN | `/Bitte zuerst anmelden/` |
+| 2026-04-27T18:27Z | `AccuracyPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T18:27Z | `AccuracyPage` — explicit "So viel Zeit, wie du brauchst" reassurance | GREEN | BR-001 surfaced to the child |
+| 2026-04-27T18:27Z | `AccuracyPage` — accuracy session shows task with NO timer element | GREEN | `queryByTestId('countdown-timer')` is null; no `role="timer"` rendered |
+| 2026-04-27T18:27Z | `AccuracyPage` — "Erklaerung zeigen" reveals ≥2 solution steps and task remains answerable | GREEN | `getTrainingExplanation` mock + answer input still enabled |
+| 2026-04-27T18:27Z | `AccuracyPage` — wrong answer leaves star balance at 8 (BR-002) | GREEN | mocked `submitTrainingAnswer` returns `WRONG`, balance=8 |
+| 2026-04-27T18:30Z | `TrainingTaskResponse.timed` made optional in client types | GREEN | preserves UC-003 page tests; AccuracyPage relies on backend value |
+
+Suite: `Tests: 89 passed (89)` — `pnpm -s test --run` (was 83, +6 for UC-004).
+Build: `pnpm -s build` GREEN.
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T18:29Z | `e2e/features/UC-004.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T18:29Z | `e2e/steps/uc-004-steps.ts` — backend-driven step bindings | BOUND | dry-run: `14 scenarios (14 skipped), 80 steps (80 skipped)`, zero undefined |
+| 2026-04-27T18:29Z | DRY refactor: shared `Then "the star points balance stays at {int}"` | GREEN | UC-003's literal `stays at 12` step generalised; single source of truth |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-004 + FR-GAME-001/002, FR-LEARN-004/006/008, FR-GAM-005, NFR-A11Y-001/003, NFR-I18N-002 |
+| Engineering quality | 🟢 | 198 backend tests + 89 frontend tests green; Test First evident (compile-RED then GREEN per behaviour); 7-arg ctor preserves UC-003 callers |
+| Security & privacy | 🟡 | No PII in logs; child identification via UUID only; `X-Child-Id` placeholder header continues until UC-009 |
+| Pedagogy | 🟢 | BR-001 (G0, no timer) enforced both server-side (`speed=0`, `timed=false`) and UI-side (no timer element); BR-002 (no star penalty) enforced server-side; BR-003 mastery preserved |
+| Language | 🟢 | English identifiers; UI Swiss High German with umlauts, no sharp s (asserted in tests and in explanation output) |
+| Operations | 🟡 | Explanation steps still hardcoded per operation; will move to a content catalogue with UC-007 (shop / customisation) once content authoring lands |
+
+Recommendation: **merge**. Follow-ups:
+
+- Externalise explanation copy to a content catalogue (per operation/difficulty).
+- Add a parent-area toggle to suggest accuracy-mode after configurable error streak (UC-009).
+- Wire actual Babylon.js animation behind `Erklaerung zeigen` once asset pipeline lands (UC-005).

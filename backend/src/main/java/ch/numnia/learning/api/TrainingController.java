@@ -3,6 +3,7 @@ package ch.numnia.learning.api;
 import ch.numnia.learning.domain.MathTask;
 import ch.numnia.learning.domain.Operation;
 import ch.numnia.learning.infra.InMemoryTaskPoolRepository;
+import ch.numnia.learning.service.ExplanationSteps;
 import ch.numnia.learning.service.SessionSummary;
 import ch.numnia.learning.service.TrainingService;
 import ch.numnia.learning.domain.AnswerResult;
@@ -43,7 +44,25 @@ public class TrainingController {
                 "sessionId", session.id(),
                 "operation", session.operation(),
                 "difficulty", session.currentDifficulty(),
-                "speed", session.currentSpeed()));
+                "speed", session.currentSpeed(),
+                "accuracyMode", session.accuracyMode()));
+    }
+
+    /** UC-004: start a session in accuracy mode (G0, no time pressure). */
+    @PostMapping("/accuracy-sessions")
+    public ResponseEntity<Map<String, Object>> startAccuracySession(
+            @RequestHeader("X-Child-Id") UUID childId,
+            @RequestBody StartSessionRequest req) {
+        TrainingSession session = trainingService.startAccuracySession(
+                childId,
+                req.operation(),
+                req.worldId() != null ? req.worldId() : InMemoryTaskPoolRepository.DEFAULT_WORLD);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "sessionId", session.id(),
+                "operation", session.operation(),
+                "difficulty", session.currentDifficulty(),
+                "speed", session.currentSpeed(),
+                "accuracyMode", session.accuracyMode()));
     }
 
     @PostMapping("/sessions/{sessionId}/tasks")
@@ -55,7 +74,14 @@ public class TrainingController {
                 "operandA", task.operandA(),
                 "operandB", task.operandB(),
                 "difficulty", task.difficulty(),
-                "speed", task.speed()));
+                "speed", task.speed(),
+                "timed", task.timed()));
+    }
+
+    /** UC-004 alt-flow 5a: animated solution steps for the current task. */
+    @GetMapping("/sessions/{sessionId}/explanation")
+    public ResponseEntity<ExplanationSteps> getExplanation(@PathVariable UUID sessionId) {
+        return ResponseEntity.ok(trainingService.getExplanation(sessionId));
     }
 
     @PostMapping("/sessions/{sessionId}/answers")

@@ -13,6 +13,7 @@ public final class TrainingSession {
     private final UUID id;
     private final UUID childId;
     private final Operation operation;
+    private final boolean accuracyMode;
     private final Instant startedAt;
     private Instant endedAt;
     private int currentDifficulty;
@@ -27,17 +28,25 @@ public final class TrainingSession {
     public TrainingSession(UUID id, UUID childId, Operation operation,
                            int initialDifficulty, int initialSpeed,
                            Instant startedAt) {
+        this(id, childId, operation, initialDifficulty, initialSpeed, false, startedAt);
+    }
+
+    public TrainingSession(UUID id, UUID childId, Operation operation,
+                           int initialDifficulty, int initialSpeed,
+                           boolean accuracyMode, Instant startedAt) {
         this.id = id;
         this.childId = childId;
         this.operation = operation;
         this.currentDifficulty = initialDifficulty;
         this.currentSpeed = initialSpeed;
+        this.accuracyMode = accuracyMode;
         this.startedAt = startedAt;
     }
 
     public UUID id() { return id; }
     public UUID childId() { return childId; }
     public Operation operation() { return operation; }
+    public boolean accuracyMode() { return accuracyMode; }
     public Instant startedAt() { return startedAt; }
     public Instant endedAt() { return endedAt; }
     public int currentDifficulty() { return currentDifficulty; }

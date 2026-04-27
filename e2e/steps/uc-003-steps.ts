@@ -190,6 +190,5 @@ When('it answers a task wrong', async function (this: NumniaWorld) {
   this.scenarioData['starsAfter'] = String(result.starPointsBalance);
 });
 
-Then('the star points balance stays at 12', function (this: NumniaWorld) {
-  expect(Number(this.scenarioData['starsAfter'])).toEqual(12);
-});
+// "the star points balance stays at {int}" is defined in uc-004-steps.ts
+// and shared (Cucumber's step registry is global across step files).
