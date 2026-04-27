@@ -1,0 +1,27 @@
+# Application profile for E2E tests running against a live Spring Boot instance.
+# Activates the in-memory H2 database and the TestTokenController
+# (needed to retrieve verification tokens without real email delivery).
+#
+# Usage: mvn spring-boot:run -Dspring-boot.run.profiles=e2e
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:numnia_e2e;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=value
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+
+numnia:
+  e2e:
+    enabled: true
+
+logging:
+  level:
+    ch.numnia: DEBUG

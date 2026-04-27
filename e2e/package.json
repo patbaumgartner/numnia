@@ -5,8 +5,8 @@
     "type": "module",
     "description": "Numnia end-to-end BDD tests (Playwright + Cucumber). Stack pins per docs/adr/ADR-001.",
     "scripts": {
-        "test": "cucumber-js --config cucumber.cjs",
-        "test:ui": "cucumber-js --config cucumber.cjs --tags @ui",
+        "test": "NODE_OPTIONS='--import=tsx/esm' cucumber-js --config cucumber.cjs",
+        "test:ui": "NODE_OPTIONS='--import=tsx/esm' cucumber-js --config cucumber.cjs --tags @ui",
         "test:playwright": "playwright test",
         "playwright:install": "playwright install --with-deps chromium"
     },

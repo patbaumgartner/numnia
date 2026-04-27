@@ -1,13 +1,45 @@
 /**
- * App — minimal application shell.
+ * App — application shell with React Router 7 routes for UC-001.
  *
  * UI copy is Swiss High German with umlauts, without sharp s (NFR-I18N-002,
  * NFR-I18N-004). Business screens are added per UC implementation.
  */
+import { Routes, Route } from 'react-router-dom';
+import RegisterPage from './pages/RegisterPage';
+import CheckEmailPage from './pages/CheckEmailPage';
+import VerifyPage from './pages/VerifyPage';
+import ChildProfilePage from './pages/ChildProfilePage';
+import OnboardingCheckEmailPage from './pages/OnboardingCheckEmailPage';
+import ConfirmChildPage from './pages/ConfirmChildPage';
+import DonePage from './pages/DonePage';
+
 export default function App() {
   return (
+    <>
+      <header>
+        <h1>Numnia – spielerisch rechnen lernen</h1>
+      </header>
+
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register/check-email" element={<CheckEmailPage />} />
+        <Route path="/verify" element={<VerifyPage />} />
+        <Route path="/onboarding/child" element={<ChildProfilePage />} />
+        <Route path="/onboarding/check-email" element={<OnboardingCheckEmailPage />} />
+        <Route path="/onboarding/confirm" element={<ConfirmChildPage />} />
+        <Route path="/onboarding/done" element={<DonePage />} />
+      </Routes>
+    </>
+  );
+}
+
+function LandingPage() {
+  return (
     <main>
-      <h1>Numnia – spielerisch rechnen lernen</h1>
+      <h2>Willkommen bei Numnia!</h2>
+      <p>Lernspiele fuer Kinder von 7 bis 12 Jahren.</p>
+      <a href="/register">Jetzt registrieren</a>
     </main>
   );
 }
