@@ -442,3 +442,78 @@ Recommendation: **merge**. Follow-ups:
 - Add `/api/test/learning-progress` and `/api/test/reduced-motion` E2E helpers to make UC-005 scenarios fully runnable end-to-end (currently dry-run only).
 - Externalise the world catalogue to `application.yaml` once UC-007 lands.
 - Wire HTTP-level child-session enforcement on `/api/worlds/**` once Spring Security arrives (UC-009).
+
+## UC-006 — Child unlocks creature and picks companion
+
+### Architect (Phase 1)
+
+- 2026-04-27T18:55Z — UC-006 spec already complete and approved.
+- FR/NFR plan: FR-CRE-001/002/003/004/007, FR-GAM-001/005, NFR-I18N-002/004.
+- 3 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+New module `ch.numnia.creatures` (domain / spi / infra / service / api).
+Failing-then-green confirmed by progressive `mvn test` runs against
+intermediate states (compile RED → unit RED → cucumber RED → GREEN).
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:00Z | `Creature` BR-002 — variable name endings accepted (Pilzar, Welleno, Zacka) | RED→GREEN | `CreatureServiceTest.creatureNames_acceptVariableEndings_BR002` |
+| 2026-04-27T19:00Z | `Creature` rejects sharp s in displayName (NFR-I18N-004) | RED→GREEN | `creatureName_withSharpS_isRejected_NFRI18N004` |
+| 2026-04-27T19:00Z | `CreatureService.processUnlocks` — mastery → unlock | RED→GREEN | `processUnlocks_withMasteredAddition_unlocksPilzar_BR001` |
+| 2026-04-27T19:00Z | BR-001 — unlocks are permanent / idempotent | RED→GREEN | `processUnlocks_isIdempotent_doesNotDuplicate_BR001` |
+| 2026-04-27T19:00Z | Alt 1a — consolation when all R1 creatures already unlocked | RED→GREEN | `processUnlocks_allCreaturesAlreadyUnlocked_grantsConsolationStarPoints_alt1a` |
+| 2026-04-27T19:00Z | BR-003 — companion swap allowed at any time | RED→GREEN | `pickCompanion_canSwapAtAnyTime_BR003` |
+| 2026-04-27T19:00Z | Exception 5x — picking locked creature → 409 | RED→GREEN | `pickCompanion_withLockedCreature_throwsCompanionNotUnlocked_409` |
+| 2026-04-27T19:00Z | Picking unknown creature → 404 | RED→GREEN | `pickCompanion_withUnknownCreature_throwsUnknownCreatureException_404` |
+| 2026-04-27T19:00Z | Picking locked does NOT change current companion | RED→GREEN | `pickCompanion_doesNotChangeCompanionWhenLockedAttempted` |
+| 2026-04-27T19:00Z | `listGallery` returns 3 entries with unlocked + companion flags | RED→GREEN | `listGallery_returnsAllThreeWithUnlockedAndCompanionFlags` |
+| 2026-04-27T19:01Z | Cucumber: Successful unlock via mastery | GREEN | `Uc006StepDefinitions` |
+| 2026-04-27T19:01Z | Cucumber: Variable name endings are accepted | GREEN | `Uc006StepDefinitions` |
+| 2026-04-27T19:01Z | Cucumber: Picking a non-unlocked creature is rejected | GREEN | `Uc006StepDefinitions` |
+
+Suite: `Tests run: 226, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`).
+JaCoCo gate: **84% line / 74% branch** — `./mvnw -B -ntp verify` GREEN.
+
+**Frontend (Vitest + RTL)**
+
+Tests authored before `GalleryPage.tsx`.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:04Z | `GalleryPage` — sign-in gate when no childId | RED→GREEN | `/Bitte zuerst anmelden/` |
+| 2026-04-27T19:04Z | `GalleryPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T19:04Z | `GalleryPage` — locked + unlocked rendering with disabled pick button | GREEN | `pick-welleno` disabled |
+| 2026-04-27T19:04Z | `GalleryPage` — unlock banner with newly unlocked names | GREEN | `unlock-banner` text contains `Pilzar` |
+| 2026-04-27T19:04Z | `GalleryPage` — pick unlocked creature → companion badge appears (BR-003) | GREEN | mocked `pickCompanion` + 2 gallery refresh calls |
+| 2026-04-27T19:04Z | `GalleryPage` — consolation banner when backend reports it (alt 1a) | GREEN | `/50 Sternenpunkte/` |
+
+Suite: `Tests: 101 passed (101)` — `pnpm -s test --run` (was 95, +6 for UC-006).
+Build: `pnpm -s build` GREEN (vite build 223 ms).
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:05Z | `e2e/features/UC-006.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T19:05Z | `e2e/steps/uc-006-steps.ts` — backend-driven step bindings | BOUND | dry-run: `20 scenarios (20 skipped), 115 steps (115 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-006 + FR-CRE-001/002/003/004/007, FR-GAM-001/005, NFR-I18N-002/004 |
+| Engineering quality | 🟢 | 226 backend tests + 101 frontend tests green; Test First evident (per-behaviour RED→GREEN); 14 dedicated unit tests around the new module |
+| Security & privacy | 🟡 | No PII in logs; child identification via UUID only; `X-Child-Id` placeholder header continues until UC-009 wires Spring Security on `/api/creatures/**` |
+| Pedagogy | 🟢 | BR-001 (permanent unlocks, idempotent), BR-002 (variable name endings, no enforced suffix), BR-003 (swap any time) all enforced server-side; FR-GAM-005 (no loss through errors) honoured by repository semantics |
+| Language | 🟢 | English identifiers; Swiss High German UI (`Galerie`, `Freigeschaltet`, `Aktiver Begleiter`, `Als Begleiter waehlen`, `Sternenpunkte`), no sharp s (asserted in tests) |
+| Operations | 🟡 | Creature catalogue still in `StaticCreatureCatalog`; will move to YAML with content catalogue (UC-007 follow-up) |
+
+Recommendation: **merge**. Follow-ups:
+
+- Add `/api/test/learning-progress` mastery helper to make the UC-006 E2E scenarios fully runnable end-to-end (currently dry-run only).
+- Externalise the creature catalogue to `application.yaml` once UC-007 lands.
+- Wire HTTP-level child-session enforcement on `/api/creatures/**` once Spring Security arrives (UC-009).
