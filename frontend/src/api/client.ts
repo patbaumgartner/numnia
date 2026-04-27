@@ -24,6 +24,9 @@ import type {
   AnswerResultResponse,
   SessionSummaryResponse,
   ExplanationStepsResponse,
+  WorldResponse,
+  PortalEntryResponse,
+  PortalType,
 } from './types';
 
 const API_BASE = '/api';
@@ -227,5 +230,26 @@ export async function getTrainingExplanation(
   return request<ExplanationStepsResponse>(
     'GET',
     `/training/sessions/${sessionId}/explanation`,
+  );
+}
+
+// ── UC-005: World map and portal entry ───────────────────────────────────────
+
+/** List the worlds available in the current release (UC-005 BR-001). */
+export async function listWorlds(): Promise<WorldResponse[]> {
+  return request<WorldResponse[]>('GET', '/worlds');
+}
+
+/** Attempt to enter a portal of a world; backend evaluates the unlock rules. */
+export async function enterPortal(
+  childId: string,
+  worldId: string,
+  portalType: PortalType,
+): Promise<PortalEntryResponse> {
+  return request<PortalEntryResponse>(
+    'POST',
+    `/worlds/${encodeURIComponent(worldId)}/portals/${portalType}/enter`,
+    undefined,
+    { 'X-Child-Id': childId },
   );
 }

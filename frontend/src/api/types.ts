@@ -111,3 +111,30 @@ export interface SessionSummaryResponse {
   starPointsBalance: number;
   masteryStatus: 'NOT_STARTED' | 'IN_CONSOLIDATION' | 'MASTERED';
 }
+
+// ── UC-005: World map and portal entry ───────────────────────────────────────
+
+export type PortalType =
+  | 'TRAINING'
+  | 'DUEL'
+  | 'TEAM'
+  | 'EVENT'
+  | 'BOSS'
+  | 'CLASS'
+  | 'SEASON';
+
+export interface WorldResponse {
+  id: string;
+  displayName: string;
+  difficultyLevel: number;
+  requiredLevel: number;
+}
+
+export interface PortalEntryResponse {
+  worldId: string;
+  portalType: PortalType;
+  locked: boolean;
+  target: string | null;
+  messageCode: string | null;
+  reducedMotion: boolean;
+}
