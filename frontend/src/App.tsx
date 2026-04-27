@@ -20,6 +20,8 @@ import TrainingPage from './pages/TrainingPage';
 import AccuracyPage from './pages/AccuracyPage';
 import WorldMapPage from './pages/WorldMapPage';
 import GalleryPage from './pages/GalleryPage';
+import AvatarPage from './pages/AvatarPage';
+import ShopPage from './pages/ShopPage';
 
 export default function App() {
   return (
@@ -49,6 +51,9 @@ export default function App() {
         <Route path="/worlds" element={<WorldMapPage />} />
         {/* UC-006: Creatures gallery */}
         <Route path="/gallery" element={<GalleryPage />} />
+        {/* UC-007: Avatar customization and shop */}
+        <Route path="/avatar" element={<AvatarPage />} />
+        <Route path="/shop" element={<ShopPage />} />
       </Routes>
     </>
   );

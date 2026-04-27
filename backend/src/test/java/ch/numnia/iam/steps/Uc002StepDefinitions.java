@@ -45,6 +45,9 @@ public class Uc002StepDefinitions {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ch.numnia.test.TestScenarioContext scenarioContext;
+
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     // ── Scenario state ────────────────────────────────────────────────────
@@ -63,6 +66,7 @@ public class Uc002StepDefinitions {
         sessionToken = null;
         lastStatusCode = 0;
         lastResponseBody = null;
+        scenarioContext.reset();
     }
 
     private String baseUrl() {
@@ -203,6 +207,7 @@ public class Uc002StepDefinitions {
             childId = UUID.fromString((String) setupBody.get("childId"));
             pin = (String) setupBody.get("pin");
         }
+        scenarioContext.setChildId(childId);
         // Create a fresh child session via the E2E test helper
         var resp = post("/api/test/child-session?childId=" + childId, null);
         assertThat(resp.statusCode()).as("creating child session should succeed").isEqualTo(200);

@@ -517,3 +517,87 @@ Recommendation: **merge**. Follow-ups:
 - Add `/api/test/learning-progress` mastery helper to make the UC-006 E2E scenarios fully runnable end-to-end (currently dry-run only).
 - Externalise the creature catalogue to `application.yaml` once UC-007 lands.
 - Wire HTTP-level child-session enforcement on `/api/creatures/**` once Spring Security arrives (UC-009).
+
+## UC-007 — Child customizes avatar and uses shop
+
+### Architect (Phase 1)
+
+- 2026-04-27T19:25Z — UC-007 spec already complete and approved.
+- FR/NFR plan: FR-CRE-005, FR-CRE-006, FR-GAM-001, FR-GAM-002, FR-GAM-003,
+  FR-GAM-005, NFR-I18N-002, NFR-I18N-004.
+- 3 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+New module `ch.numnia.avatar` (domain / spi / infra / service / api). Tests
+authored before production classes; failing-then-green confirmed by
+progressive `mvn test` runs against intermediate states.
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:20Z | `AvatarService.purchase` happy path | RED→GREEN | `AvatarServiceTest.purchase_withSufficientFunds_debitsAndAddsToInventory` |
+| 2026-04-27T19:20Z | BR-001 atomic booking — insufficient star points | RED→GREEN | `purchase_withInsufficientFunds_throwsAndLeavesNoSideEffect` (no debit, no inventory entry, audit `PURCHASE_REJECTED_INSUFFICIENT_FUNDS`) |
+| 2026-04-27T19:20Z | BR-002 errors do not affect star points | GREEN | balance unchanged on failed purchase paths |
+| 2026-04-27T19:20Z | BR-003 inventory is permanent / duplicate purchase | RED→GREEN | `purchase_thenPurchaseAgain_throwsDuplicate` |
+| 2026-04-27T19:20Z | BR-004 vetted catalogs only — base model | RED→GREEN | `setBaseModel_withUnknownAvatar_throws` |
+| 2026-04-27T19:20Z | BR-004 vetted catalogs only — shop item | RED→GREEN | `purchase_withUnknownItem_throws` |
+| 2026-04-27T19:20Z | exc 5y inventory tamper — equip without ownership | RED→GREEN | `equip_withoutOwnership_throwsAndAuditsTamperRejected` |
+| 2026-04-27T19:20Z | NFR-I18N-004 no sharp s in `ShopItem.displayName` | RED→GREEN | `ShopItem` compact-ctor rejects `Straße`-style names |
+| 2026-04-27T19:23Z | Cucumber: Successful purchase with star points | GREEN | `Uc007StepDefinitions` |
+| 2026-04-27T19:23Z | Cucumber: Purchase with insufficient star points is prevented | GREEN | `Uc007StepDefinitions` |
+| 2026-04-27T19:23Z | Cucumber: Inventory manipulation via API is rejected | GREEN | `Uc007StepDefinitions` |
+
+Suite: `Tests run: 247, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`).
+
+Side fix: `Uc003StepDefinitions.childHas12StarPoints` generalised to a
+parametric `the child has {int} star points` step that bridges via the
+new `TestScenarioContext` bean (introduced for cross-UC childId sharing).
+This unifies UC-003 and UC-007 around the same UC-spec phrasing without
+ambiguous-step-definition errors.
+
+**Frontend (Vitest + RTL)**
+
+Tests authored before `ShopPage.tsx` and `AvatarPage.tsx`.
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:33Z | `ShopPage` — sign-in gate when no childId | RED→GREEN | `/Bitte zuerst anmelden/` |
+| 2026-04-27T19:33Z | `ShopPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T19:33Z | `ShopPage` — catalog with prices and balance | GREEN | `30 Sternenpunkte`, `50 Sternenpunkte`, `balance` testid |
+| 2026-04-27T19:33Z | `ShopPage` — successful purchase updates balance (BR-002) | GREEN | mocked `purchaseShopItem` returns `starPointsBalance:20` |
+| 2026-04-27T19:33Z | `ShopPage` — insufficient funds shows BR-001 notice (alt 4a) | GREEN | `ApiError(409, INSUFFICIENT_STAR_POINTS)` → `/Sammle noch mehr Sternenpunkte/` |
+| 2026-04-27T19:33Z | `ShopPage` — duplicate purchase shows hint | GREEN | `ApiError(409, ALREADY_IN_INVENTORY)` → `/bereits in deinem Inventar/` |
+| 2026-04-27T19:33Z | `AvatarPage` — sign-in gate / no sharp s / base model render | RED→GREEN | 6 tests |
+| 2026-04-27T19:33Z | `AvatarPage` — empty inventory hint links to shop | GREEN | `/Shop/` text |
+| 2026-04-27T19:33Z | `AvatarPage` — base-model change calls backend (FR-CRE-005) | GREEN | mocked `setAvatarBaseModel('avatar-owl')` |
+| 2026-04-27T19:33Z | `AvatarPage` — equip inventory item updates equipped slots | GREEN | mocked `equipAvatarItem` with `HEAD: star-cap` |
+
+Suite: `Tests: 113 passed (113)` — `pnpm -s test --run` (was 101, +12 for UC-007).
+Build: `pnpm -s build` GREEN (`vite build` 243 ms).
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:35Z | `e2e/features/UC-007.feature` — 3 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T19:35Z | `e2e/steps/uc-007-steps.ts` — backend-driven step bindings | BOUND | dry-run: `23 scenarios (23 skipped), 135 steps (135 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-007 + FR-CRE-005/006, FR-GAM-001/002/003/005, NFR-I18N-002/004 |
+| Engineering quality | 🟢 | 247 backend tests + 113 frontend tests green; Test First evident (per-behaviour RED→GREEN); 18 dedicated unit tests around the new module |
+| Security & privacy | 🟡 | No PII in logs; child identification via UUID only; `X-Child-Id` placeholder header continues until UC-009. Tamper attempts (equip without ownership) audited as `INVENTORY_TAMPER_REJECTED`. |
+| Pedagogy | 🟢 | BR-001 atomic booking on failure (no debit, no inventory entry); BR-002 fixed transparent prices in star points; BR-003 inventory permanent and idempotent against duplicates; BR-004 only vetted catalogs reachable. FR-GAM-005 honoured (errors never deduct star points; only confirmed purchases do). |
+| Language | 🟢 | English identifiers; Swiss High German UI (`Sternenmuetze`, `Mondumhang`, `Sonnenbrille`, `Sternenpunkte`, `Glueckwunsch`, `Sammle noch mehr`), no sharp s (asserted in domain validation and in tests) |
+| Operations | 🟡 | Shop catalogue still in `StaticShopItemCatalog`; will move to YAML with content catalogue follow-up. |
+
+Recommendation: **merge**. Follow-ups:
+
+- Add `/api/test/star-points` E2E helper to make UC-007 scenarios fully runnable end-to-end (currently dry-run only — same status as UC-005 reduced-motion / UC-006 mastery helpers).
+- Externalise shop catalogue, fantasy-name catalog and avatar base-model catalog to `application.yaml`.
+- Wire HTTP-level child-session enforcement on `/api/avatar/**` and `/api/shop/**` once Spring Security arrives (UC-009).
+- Persist inventory + audit log to Postgres + Flyway (currently in-memory).

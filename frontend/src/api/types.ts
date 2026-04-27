@@ -167,3 +167,37 @@ export interface CreatureUnlockResultResponse {
 export interface PickCompanionResponse {
   companion: string;
 }
+
+// ── UC-007: Avatar customization and shop ────────────────────────────────────
+
+export interface AvatarResponse {
+  childId: string;
+  baseModel: string;
+  equipped: Record<string, string>;
+  starPointsBalance: number;
+}
+
+export interface ShopItemResponse {
+  id: string;
+  displayName: string;
+  priceStarPoints: number;
+  slot: string;
+}
+
+export interface InventoryItemResponse {
+  itemId: string;
+  purchasedAt: string;
+}
+
+export interface InventoryResponse {
+  items: InventoryItemResponse[];
+}
+
+export interface ShopItemsResponse {
+  items: ShopItemResponse[];
+}
+
+export interface PurchaseResultResponse {
+  itemId: string;
+  starPointsBalance: number;
+}

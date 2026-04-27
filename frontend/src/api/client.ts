@@ -30,6 +30,10 @@ import type {
   GalleryResponse,
   CreatureUnlockResultResponse,
   PickCompanionResponse,
+  AvatarResponse,
+  ShopItemsResponse,
+  InventoryResponse,
+  PurchaseResultResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -291,4 +295,58 @@ export async function pickCompanion(
     undefined,
     { 'X-Child-Id': childId },
   );
+}
+
+// ── UC-007: Avatar customization and shop ────────────────────────────────────
+
+/** Fetch the current avatar configuration plus star-points balance. */
+export async function getAvatar(childId: string): Promise<AvatarResponse> {
+  return request<AvatarResponse>('GET', '/avatar', undefined, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** Change the avatar base model (vetted catalog only, BR-003 of UC-001). */
+export async function setAvatarBaseModel(
+  childId: string,
+  baseModel: string,
+): Promise<{ baseModel: string; equipped: Record<string, string> }> {
+  return request('PUT', '/avatar/base-model', { baseModel }, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** Equip an item already present in the inventory. */
+export async function equipAvatarItem(
+  childId: string,
+  itemId: string,
+): Promise<{ baseModel: string; equipped: Record<string, string> }> {
+  return request('POST', '/avatar/equipped', { itemId }, {
+    'X-Child-Id': childId,
+  });
+}
+
+/** List shop items with prices in star points (UC-007 step 3). */
+export async function listShopItems(): Promise<ShopItemsResponse> {
+  return request<ShopItemsResponse>('GET', '/shop/items');
+}
+
+/** Purchase a shop item; deducts price and adds to inventory permanently. */
+export async function purchaseShopItem(
+  childId: string,
+  itemId: string,
+): Promise<PurchaseResultResponse> {
+  return request<PurchaseResultResponse>(
+    'POST',
+    `/shop/items/${encodeURIComponent(itemId)}/purchase`,
+    undefined,
+    { 'X-Child-Id': childId },
+  );
+}
+
+/** List the items the child already owns (UC-007 BR-003 permanent inventory). */
+export async function getInventory(childId: string): Promise<InventoryResponse> {
+  return request<InventoryResponse>('GET', '/avatar/inventory', undefined, {
+    'X-Child-Id': childId,
+  });
 }
