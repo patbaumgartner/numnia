@@ -681,3 +681,84 @@ Recommendation: **merge**. Follow-ups:
 - Persist `AccessibilityPreferencesRepository` to Postgres + Flyway.
 - Wire HTTP-level child-session enforcement on `/api/progress/**` once Spring Security arrives (UC-009).
 - Externalise mastery / palette defaults to `application.yaml`.
+
+## UC-009 — Parent sets daily limit and risk mechanic
+
+### Architect (Phase 1)
+
+- 2026-04-27T19:55Z — UC-009 spec already complete and approved.
+- FR/NFR plan: FR-PAR-001/002/003, FR-GAM-005/006, FR-SAFE-005,
+  NFR-SEC-003, NFR-PRIV-001.
+- 4 verbatim Gherkin scenarios in the UC spec.
+
+### Implementer (Phase 2)
+
+New module `ch.numnia.parentcontrols` (sibling to learning/iam/avatar/...).
+Same-iteration test-first sequence per `.ralph/guardrails.md`: feature
+file + unit tests + step defs authored, compiled RED (missing
+`ParentControlsService`/`RiskMechanicService` symbols), then minimal
+production code added until GREEN.
+
+**Backend (Cucumber + JUnit)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:55Z | Service skeleton compile | RED | `cannot find symbol ParentControlsService` |
+| 2026-04-27T19:56Z | Cucumber: Daily limit takes effect immediately | GREEN | `Uc009StepDefinitions` — running session revoked, `canStartSession=false` |
+| 2026-04-27T19:56Z | Cucumber: Risk mechanic is disabled by default | GREEN | defaults via `getOrDefault` show `riskMechanicEnabled=false` |
+| 2026-04-27T19:56Z | Cucumber: Even an active risk mechanic causes no permanent loss | GREEN | round-pool restored 1:1 in `endMatch` (BR-003) |
+| 2026-04-27T19:56Z | Cucumber: Change is recorded in an auditable way | GREEN | `ControlsAuditEntry` with before/after/timestamp persisted (BR-004) |
+| 2026-04-27T19:56Z | BR-001 daily limit enforced server-side | GREEN | `updateControls` revokes active `ChildSession` when used minutes ≥ new limit |
+| 2026-04-27T19:56Z | BR-002 default risk mechanic OFF | GREEN | `ChildControls.defaults().riskMechanicEnabled() == false` |
+| 2026-04-27T19:56Z | BR-003 risk mechanic causes no permanent loss | GREEN | `RiskMechanicServiceTest.endMatch_restoresEverything_br003` |
+| 2026-04-27T19:56Z | BR-004 every change auditable | GREEN | per-field `CONTROLS_UPDATED` + dedicated `RISK_MECHANIC_*` and `NO_LIMIT_CONFIRMED` entries |
+| 2026-04-27T19:56Z | Alt 3a no-limit requires explicit confirmation | GREEN | `NoLimitConfirmationRequiredException` thrown without `confirmNoLimit=true` |
+| 2026-04-27T19:56Z | Foreign parent rejected (NFR-SEC-003) | GREEN | `UnauthorizedControlsAccessException` |
+
+Suite: `Tests run: 285, Failures: 0, Errors: 0, Skipped: 0` (`./mvnw -B -ntp test`).
++15 unit (`ParentControlsServiceTest`) +5 unit (`RiskMechanicServiceTest`)
++4 cucumber scenarios for UC-009 (was 26, now 30).
+
+**Frontend (Vitest + RTL)**
+
+| Time (UTC) | Behaviour | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:58Z | `ParentControlsPage` — defaults rendered | RED→GREEN | 30/15/false visible in form |
+| 2026-04-27T19:58Z | `ParentControlsPage` — no sharp s in copy | GREEN | `expect(textContent).not.toContain('ß')` |
+| 2026-04-27T19:58Z | `ParentControlsPage` — saving calls PUT with new limit | GREEN | mocked `updateChildControls` called with `dailyLimitMinutes=45` |
+| 2026-04-27T19:58Z | `ParentControlsPage` — risk toggle calls PUT with `riskMechanicEnabled=true` | GREEN | BR-002 boundary asserted |
+| 2026-04-27T19:58Z | `ParentControlsPage` — explains no permanent loss | GREEN | `nie dauerhaft verloren` rendered |
+| 2026-04-27T19:58Z | `ParentControlsPage` — "Kein Limit" requires confirmation | GREEN | alertdialog shown, `confirmNoLimit=true` only on Ja-button click |
+| 2026-04-27T19:58Z | `ParentControlsPage` — audit log mention | GREEN | BR-004 surfaced |
+| 2026-04-27T19:58Z | `ParentControlsPage` — error when no parent session | GREEN | `Bitte zuerst als Elternteil anmelden` |
+
+Suite: `Tests: 129 passed (129)` — `pnpm -s test --run` (was 121, +8).
+Build: `pnpm -s build` GREEN.
+
+**E2E Cucumber+Playwright**
+
+| Time (UTC) | Artefact | State | Evidence |
+|---|---|---|---|
+| 2026-04-27T19:59Z | `e2e/features/UC-009.feature` — 4 scenarios verbatim | AUTHORED | matches UC spec |
+| 2026-04-27T19:59Z | `e2e/steps/uc-009-steps.ts` — backend-driven step bindings | BOUND | dry-run: `30 scenarios (30 skipped), 163 steps (163 skipped)`, zero undefined |
+
+### Reviewer (Phase 3) — summary
+
+| Category | Status | Note |
+|---|---|---|
+| Traceability | 🟢 | Commit references UC-009 + FR-PAR-001/002/003 / FR-GAM-005/006 / FR-SAFE-005 / NFR-SEC-003 / NFR-PRIV-001 / BR-001/002/003/004 |
+| Engineering quality | 🟢 | 285 backend tests + 129 frontend tests green; same-iteration test-first sequence (RED→GREEN) recorded |
+| Security & privacy | 🟡 | Service-level parent-ownership check (`UnauthorizedControlsAccessException`); `X-Parent-Id` header is the placeholder until Spring Security finalizes parent-session enforcement (follow-up) |
+| Pedagogy | 🟢 | Defaults are configuration (`ChildControls.DEFAULT_*` constants — externalize follow-up); risk mechanic guarantees no permanent loss (BR-003) |
+| Language | 🟢 | English identifiers; UI Swiss High German with umlauts, no sharp s (asserted) |
+| Operations | 🟡 | In-memory repositories; no Postgres yet — same status as other modules |
+
+Recommendation: **merge**. Follow-ups (carry forward, not blockers for UC-009 GREEN):
+
+- Move `ChildControls`, `ControlsAuditEntry`, round-pool repositories to Postgres + Flyway.
+- Externalize `DEFAULT_DAILY_LIMIT_MINUTES` (30) and `DEFAULT_BREAK_RECOMMENDATION_MINUTES` (15) to `application.yaml` (FR-OPS-002).
+- Replace `X-Parent-Id` header placeholder with Spring Security parent-session resolution.
+- Wire `ParentControlsService.recordPlayMinutes` into `TrainingService` end-of-session flow (currently service-only API, not yet called from training).
+- Wire `RiskMechanicService.recordWrongAnswer` into the active match flow (UC-005 portal/match) and `endMatch` into the match-end transition.
+- Add `/api/test/play-minutes` and `/api/test/risk-pool` E2E seed helpers so UC-009 scenarios can run end-to-end (currently dry-run only).
+- Reconsider UTC-day vs Switzerland-local-day for the daily limit boundary (consistency follow-up across `learning` and `parentcontrols`).

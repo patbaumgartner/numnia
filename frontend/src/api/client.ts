@@ -36,6 +36,8 @@ import type {
   PurchaseResultResponse,
   ProgressOverviewResponse,
   ColorPalette,
+  ChildControlsResponse,
+  ChildControlsRequest,
 } from './types';
 
 const API_BASE = '/api';
@@ -370,5 +372,32 @@ export async function setProgressPalette(
     '/progress/preferences/palette',
     { palette },
     { 'X-Child-Id': childId },
+  );
+}
+
+/** UC-009: get the per-child play-time + risk controls. */
+export async function getChildControls(
+  parentId: string,
+  childId: string,
+): Promise<ChildControlsResponse> {
+  return request<ChildControlsResponse>(
+    'GET',
+    `/parents/me/children/${encodeURIComponent(childId)}/controls`,
+    undefined,
+    { 'X-Parent-Id': parentId },
+  );
+}
+
+/** UC-009: update the per-child controls (daily limit + risk). */
+export async function updateChildControls(
+  parentId: string,
+  childId: string,
+  body: ChildControlsRequest,
+): Promise<ChildControlsResponse> {
+  return request<ChildControlsResponse>(
+    'PUT',
+    `/parents/me/children/${encodeURIComponent(childId)}/controls`,
+    body,
+    { 'X-Parent-Id': parentId },
   );
 }

@@ -230,3 +230,20 @@ export interface ProgressOverviewResponse {
   empty: boolean;
   entries: OperationProgressResponse[];
 }
+
+// ── UC-009: parent controls (daily limit + risk mechanic) ────────────────
+
+export interface ChildControlsResponse {
+  childId: string;
+  parentId: string;
+  dailyLimitMinutes: number | null;
+  breakRecommendationMinutes: number;
+  riskMechanicEnabled: boolean;
+}
+
+export interface ChildControlsRequest {
+  dailyLimitMinutes: number | null;
+  breakRecommendationMinutes: number;
+  riskMechanicEnabled: boolean;
+  confirmNoLimit: boolean;
+}

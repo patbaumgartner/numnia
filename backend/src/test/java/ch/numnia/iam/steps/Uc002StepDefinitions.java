@@ -121,6 +121,8 @@ public class Uc002StepDefinitions {
         parentId = UUID.fromString((String) body.get("parentId"));
         childId = UUID.fromString((String) body.get("childId"));
         pin = (String) body.get("pin");
+        scenarioContext.setChildId(childId);
+        scenarioContext.setParentId(parentId);
     }
 
     @Given("a PIN set by the parent")
