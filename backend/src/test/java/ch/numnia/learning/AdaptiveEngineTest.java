@@ -73,4 +73,24 @@ class AdaptiveEngineTest {
 
         assertThat(session.currentSpeed()).isEqualTo(AdaptiveEngine.MIN_SPEED);
     }
+
+    /**
+     * UC-004 BR-001: accuracy-mode (G0) sessions are not subject to speed
+     * adjustments by the adaptive engine.
+     */
+    @Test
+    void applyAfterAnswer_inAccuracyMode_doesNotAdjustSpeedOrSuggestMode() {
+        TrainingSession session = new TrainingSession(
+                UUID.randomUUID(), UUID.randomUUID(), Operation.ADDITION,
+                3, 0, true, Instant.now());
+        session.recordOutcome(AnswerOutcome.WRONG);
+        session.recordOutcome(AnswerOutcome.WRONG);
+        session.recordOutcome(AnswerOutcome.WRONG);
+
+        ModeSuggestion suggestion = engine.applyAfterAnswer(session);
+
+        assertThat(session.currentSpeed()).isZero();
+        assertThat(suggestion).isEqualTo(ModeSuggestion.NONE);
+        assertThat(session.consecutiveErrors()).isEqualTo(3);
+    }
 }

@@ -76,6 +76,20 @@ public class TrainingService {
     }
 
     public TrainingSession startSession(UUID childId, Operation operation, String worldId) {
+        return startInternal(childId, operation, worldId, false);
+    }
+
+    /**
+     * Start a session in accuracy mode (UC-004 BR-001): G is fixed to 0 (no
+     * timer), the adaptive engine does not downgrade speed further, and the
+     * audit trail records {@link LearningAuditAction#ACCURACY_SESSION_STARTED}.
+     */
+    public TrainingSession startAccuracySession(UUID childId, Operation operation, String worldId) {
+        return startInternal(childId, operation, worldId, true);
+    }
+
+    private TrainingSession startInternal(UUID childId, Operation operation, String worldId,
+                                          boolean accuracyMode) {
         if (!taskPools.isConfigured(worldId, operation)) {
             audit.append(childId, LearningAuditAction.TASK_POOL_EMPTY,
                     "world=" + worldId + ",op=" + operation);
@@ -85,16 +99,37 @@ public class TrainingService {
         var progress = progressRepo.findByChildAndOperation(childId, operation)
                 .orElseGet(() -> progressRepo.save(new LearningProgress(
                         childId, operation, DEFAULT_DIFFICULTY, DEFAULT_SPEED)));
+        int initialSpeed = accuracyMode ? 0 : progress.currentSpeed();
         var session = new TrainingSession(
                 UUID.randomUUID(), childId, operation,
-                progress.currentDifficulty(), progress.currentSpeed(),
+                progress.currentDifficulty(), initialSpeed, accuracyMode,
                 clock.instant());
         sessionRepo.save(session);
-        audit.append(childId, LearningAuditAction.TRAINING_SESSION_STARTED,
+        LearningAuditAction action = accuracyMode
+                ? LearningAuditAction.ACCURACY_SESSION_STARTED
+                : LearningAuditAction.TRAINING_SESSION_STARTED;
+        audit.append(childId, action,
                 "session=" + session.id() + ",op=" + operation);
-        log.info("training.session.started childRef={} op={} S={} G={}",
-                childId, operation, session.currentDifficulty(), session.currentSpeed());
+        log.info("training.session.started childRef={} op={} S={} G={} accuracy={}",
+                childId, operation, session.currentDifficulty(), session.currentSpeed(),
+                accuracyMode);
         return session;
+    }
+
+    /**
+     * Build the animated solution steps for the current task of the given
+     * session (UC-004 alt-flow 5a / FR-LEARN-008). The current task is left
+     * intact so the child can continue answering after watching the steps.
+     */
+    public ExplanationSteps getExplanation(UUID sessionId) {
+        var session = requireSession(sessionId);
+        var task = session.currentTask();
+        if (task == null) {
+            throw new IllegalStateException("No current task on session " + sessionId);
+        }
+        audit.append(session.childId(), LearningAuditAction.EXPLANATION_REQUESTED,
+                "session=" + sessionId);
+        return ExplanationSteps.forTask(task);
     }
 
     public MathTask nextTask(UUID sessionId) {

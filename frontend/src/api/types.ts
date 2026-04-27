@@ -86,6 +86,7 @@ export interface TrainingTaskResponse {
   operandB: number;
   difficulty: number;
   speed: number;
+  timed?: boolean;
 }
 
 export interface AnswerResultResponse {
@@ -93,6 +94,14 @@ export interface AnswerResultResponse {
   currentSpeed: number;
   modeSuggestion: ModeSuggestion;
   starPointsBalance: number;
+}
+
+// ── UC-004: Accuracy mode (G0, no time pressure) ─────────────────────────────
+
+export interface ExplanationStepsResponse {
+  taskId: string;
+  operation: Operation;
+  steps: string[];
 }
 
 export interface SessionSummaryResponse {

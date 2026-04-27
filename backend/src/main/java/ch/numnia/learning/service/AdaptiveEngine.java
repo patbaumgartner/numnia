@@ -17,6 +17,10 @@ public class AdaptiveEngine {
     public static final int ERROR_TRIGGER = 3;
 
     public ModeSuggestion applyAfterAnswer(TrainingSession session) {
+        // UC-004 BR-001: accuracy mode (G0) never has its speed adjusted.
+        if (session.accuracyMode()) {
+            return ModeSuggestion.NONE;
+        }
         if (session.consecutiveErrors() >= ERROR_TRIGGER) {
             int newSpeed = Math.max(MIN_SPEED, session.currentSpeed() - 1);
             session.setCurrentSpeed(newSpeed);

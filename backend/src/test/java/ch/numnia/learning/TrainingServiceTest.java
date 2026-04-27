@@ -133,4 +133,68 @@ class TrainingServiceTest {
         }
         return session;
     }
+
+    // ── UC-004: accuracy mode ─────────────────────────────────────────────
+
+    @Test
+    void startAccuracySession_initializesSpeedToZeroAndMarksAccuracyMode() {
+        var session = service.startAccuracySession(
+                childId, Operation.SUBTRACTION, InMemoryTaskPoolRepository.DEFAULT_WORLD);
+
+        assertThat(session.accuracyMode()).isTrue();
+        assertThat(session.currentSpeed()).isZero();
+        assertThat(audit.findByChildRef(childId))
+                .anyMatch(e -> e.action() == LearningAuditAction.ACCURACY_SESSION_STARTED);
+    }
+
+    @Test
+    void nextTask_inAccuracySession_emitsUntimedTask_brG0NoTimer() {
+        var session = service.startAccuracySession(
+                childId, Operation.ADDITION, InMemoryTaskPoolRepository.DEFAULT_WORLD);
+
+        MathTask task = service.nextTask(session.id());
+
+        assertThat(task.speed()).isZero();
+        assertThat(task.timed()).isFalse();
+    }
+
+    @Test
+    void submitAnswer_threeWrongInAccuracyMode_doesNotDowngradeOrSuggestMode() {
+        var session = service.startAccuracySession(
+                childId, Operation.ADDITION, InMemoryTaskPoolRepository.DEFAULT_WORLD);
+
+        AnswerResult r = null;
+        for (int i = 0; i < 3; i++) {
+            service.nextTask(session.id());
+            r = service.submitAnswer(session.id(), Integer.MIN_VALUE, 0);
+        }
+
+        assertThat(r.outcome()).isEqualTo(AnswerOutcome.WRONG);
+        assertThat(r.currentSpeed()).isZero();
+        assertThat(r.modeSuggestion()).isEqualTo(ModeSuggestion.NONE);
+    }
+
+    @Test
+    void getExplanation_returnsNonEmptyStepsAndAuditsRequest() {
+        var session = service.startAccuracySession(
+                childId, Operation.ADDITION, InMemoryTaskPoolRepository.DEFAULT_WORLD);
+        service.nextTask(session.id());
+
+        ExplanationSteps explanation = service.getExplanation(session.id());
+
+        assertThat(explanation.steps()).isNotEmpty();
+        assertThat(explanation.steps()).allMatch(s -> !s.contains("ß"),
+                "no sharp s in explanation copy (NFR-I18N-004)");
+        assertThat(audit.findByChildRef(childId))
+                .anyMatch(e -> e.action() == LearningAuditAction.EXPLANATION_REQUESTED);
+    }
+
+    @Test
+    void getExplanation_withoutCurrentTask_throws() {
+        var session = service.startAccuracySession(
+                childId, Operation.ADDITION, InMemoryTaskPoolRepository.DEFAULT_WORLD);
+
+        assertThatThrownBy(() -> service.getExplanation(session.id()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

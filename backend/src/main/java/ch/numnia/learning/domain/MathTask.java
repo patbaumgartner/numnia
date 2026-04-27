@@ -25,4 +25,9 @@ public record MathTask(
                     "expectedAnswer outside [0, " + MAX_RESULT + "]: " + expectedAnswer);
         }
     }
+
+    /** UC-004 BR-001: a task is timed iff its speed level is greater than zero (G0 = no timer). */
+    public boolean timed() {
+        return speed > 0;
+    }
 }
